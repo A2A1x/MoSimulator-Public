@@ -145,6 +145,10 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private StreamWriter _log;
 
         private AlignNode[] _reefFaces;
+        private CoralStation[] _stations;
+        private bool _stationBehind;
+        [Tooltip("Coral intake only switches sides once the station is this far (dot of forward and direction) past side-on, so it doesn't flicker")]
+        [SerializeField] private float stationSideDeadband = 0.2f;
         private Vector3 _baseAlignOffset;
         private bool _rightBranch = true;
 
@@ -170,6 +174,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 .Select(go => go.GetComponent<AlignNode>())
                 .Where(node => node != null)
                 .ToArray();
+            _stations = FindObjectsByType<CoralStation>(FindObjectsSortMode.None);
             if (autoAlign) _baseAlignOffset = autoAlign.offset;
 
             RobotGamePieceController.SetPreload(coralStowState);
@@ -219,6 +224,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 case ReefscapeSetpoints.Intake:
                     bool coralMode = CurrentRobotMode == ReefscapeRobotMode.Coral;
                     SetPose(coralMode ? coralIntakePose : algaeIntakePose);
+                    // Coral intakes off whichever side faces the nearest human player station
+                    if (_stations.Length > 0)
+                    {
+                        var station = _stations.OrderBy(st => (st.transform.position - transform.position).sqrMagnitude).First();
+                        float side = Vector3.Dot(transform.forward, (station.transform.position - transform.position).normalized);
+                        if (Mathf.Abs(side) > stationSideDeadband) _stationBehind = side < 0;
+                    }
+                    _reversed = coralMode && allowReverse && _stationBehind;
                     wantCoral = empty && coralMode;
                     wantAlgae = empty && !coralMode;
                     break;
