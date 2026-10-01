@@ -116,6 +116,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private bool logJoints;
 
         [Header("Release")]
+        [Tooltip("A scored coral ignores the robot's colliders for coralClearTime")]
+        [SerializeField] private bool coralIgnoresRobotAfterScore;
         [Tooltip("Seconds a just-released coral ignores the whole robot, so it can't snag on the arm")]
         [SerializeField] private float coralClearTime = 0.5f;
 
@@ -551,6 +553,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 var force = LastSetpoint == ReefscapeSetpoints.L1 ? l1ReleaseForce : coralReleaseForce;
                 if (_reversed) force.z = -force.z; // scoring out the back pushes the other way
                 if (!_coralController.ReleaseGamePieceWithForce(force)) return false;
+                if (!coralIgnoresRobotAfterScore) return true;
                 SetCoralIgnoresRobot(coral);
                 _clearUntil = Time.time + coralClearTime;
             }
