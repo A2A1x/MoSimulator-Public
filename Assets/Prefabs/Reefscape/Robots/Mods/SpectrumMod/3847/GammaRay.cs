@@ -7,6 +7,8 @@ using Games.Reefscape.Enums;
 using Games.Reefscape.FieldScripts;
 using Games.Reefscape.GamePieceSystem;
 using Games.Reefscape.Robots;
+using MoSimCore.BaseClasses.GameManagement;
+using MoSimCore.Enums;
 using RobotFramework.Components;
 using RobotFramework.Controllers.GamePieceSystem;
 using RobotFramework.Controllers.PidSystems;
@@ -53,6 +55,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [Header("Poses (Spectrum 'ex' values; reef poses are mirrored automatically when scoring off the back)")]
         [SerializeField] private SpectrumPose stowPose = new SpectrumPose(0, 0, 180, 90);
         [SerializeField] private SpectrumPose coralIntakePose = new SpectrumPose(0, -9.2f, -158.7f, 0);
+        [SerializeField] private SpectrumPose groundCoralIntakePose = new SpectrumPose(0, 4, 76, 179.9f);
         [SerializeField] private SpectrumPose algaeIntakePose = new SpectrumPose(4.5f, 0, 64, 0);
         [SerializeField] private SpectrumPose l1Pose = new SpectrumPose(0.3f, 16.9f, -130.6f, 0);
         [SerializeField] private SpectrumPose l2Pose = new SpectrumPose(6.4f, -19.8f, -127.1f, 0);
@@ -139,6 +142,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private Collider[] _clearingCoral = Array.Empty<Collider>();
         private int _robotMask;
         private float _clearUntil;
+        private GameObject _pullingCoral;
         private float TimeInPhase => Time.time - _phaseStart;
 
         // Per joint: the target it is moving to and the angle it must not sweep through on the way
@@ -147,6 +151,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private AlignNode[] _reefFaces;
         private CoralStation[] _stations;
         private bool _stationBehind;
+        private bool _stationMode;   // coral intake: false = ground (default), true = human player station; RobotSpecial toggles, as on 2910
+        private bool _robotSpecialPressed;
         [Tooltip("Coral intake only switches sides once the station is this far (dot of forward and direction) past side-on, so it doesn't flicker")]
         [SerializeField] private float stationSideDeadband = 0.2f;
         private Vector3 _baseAlignOffset;
@@ -200,6 +206,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private void FixedUpdate()
         {
             UpdateBranchSelection();
+            CheckStationMode();
             if (_clearingCoral.Length > 0 && Time.time >= _clearUntil) SetCoralIgnoresRobot(Array.Empty<Collider>());
 
             if (CurrentSetpoint != _phaseSetpoint)
@@ -223,15 +230,15 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                     break;
                 case ReefscapeSetpoints.Intake:
                     bool coralMode = CurrentRobotMode == ReefscapeRobotMode.Coral;
-                    SetPose(coralMode ? coralIntakePose : algaeIntakePose);
-                    // Coral intakes off whichever side faces the nearest human player station
-                    if (_stations.Length > 0)
+                    SetPose(!coralMode ? algaeIntakePose : _stationMode ? coralIntakePose : groundCoralIntakePose);
+                    // Station intake comes off whichever side faces the nearest human player station
+                    if (_stationMode && _stations.Length > 0)
                     {
                         var station = _stations.OrderBy(st => (st.transform.position - transform.position).sqrMagnitude).First();
                         float side = Vector3.Dot(transform.forward, (station.transform.position - transform.position).normalized);
                         if (Mathf.Abs(side) > stationSideDeadband) _stationBehind = side < 0;
                     }
-                    _reversed = coralMode && allowReverse && _stationBehind;
+                    _reversed = coralMode && _stationMode && allowReverse && _stationBehind;
                     wantCoral = empty && coralMode;
                     wantAlgae = empty && !coralMode;
                     break;
@@ -301,6 +308,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
             _coralController.RequestIntake(coralIntake, wantCoral);
             _algaeController.RequestIntake(algaeIntake, wantAlgae);
+            KeepPulledCoralOffRobot(wantCoral);
             _coralController.SetTargetState(coralStowState);
             _algaeController.SetTargetState(algaeStowState);
 
@@ -348,6 +356,16 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         }
 
         private void OnDestroy() => _log?.Dispose();
+
+        /// Same as JackInTheBot (2910): each RobotSpecial press flips between ground and station coral intake.
+        private void CheckStationMode()
+        {
+            if (RobotSpecialAction.IsPressed() && !_robotSpecialPressed && BaseGameManager.Instance.RobotState == RobotState.Enabled)
+                _stationMode = !_stationMode;
+
+            CurrentCoralStationMode.DropType = _stationMode ? DropType.Station : DropType.Ground;
+            _robotSpecialPressed = RobotSpecialAction.IsPressed();
+        }
 
         private void SetPose(SpectrumPose pose, bool reef = false, bool branch = false)
         {
@@ -441,6 +459,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private void Drive(GenericJoint joint, JointAxis axis, PidConstants pid, float target, float frameOffset = 0,
             bool commitDirection = true, float? blockedOverride = null)
         {
+            // Disabled (e.g. the auto->teleop transition): leave the joint braked, as GenericJoint.SetTargetAngle would
+            if (BaseGameManager.Instance.RobotState == RobotState.Disabled) return;
             if (!_loops.TryGetValue(joint, out var loop)) _loops[joint] = loop = new AngleLoop();
 
             float current = JointAngle(joint, axis) + frameOffset;
@@ -535,6 +555,24 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 _clearUntil = Time.time + coralClearTime;
             }
             return true;
+        }
+
+        /// The intake pulls coral in with forces, and until it's secured the coral still collides with the robot.
+        /// A coral that comes in tilted jams against the arm while the pull keeps pushing, and gets flung; so it
+        /// ignores the robot while being pulled (and for coralClearTime after, if the pull is abandoned).
+        private void KeepPulledCoralOffRobot(bool intaking)
+        {
+            var pulling = intaking ? coralIntake.GamePiece : null;
+            if (pulling && !coralIntake.securedGamePiece)
+            {
+                if (pulling != _pullingCoral) SetCoralIgnoresRobot(pulling.GetComponentsInChildren<Collider>());
+                _pullingCoral = pulling;
+                _clearUntil = Time.time + coralClearTime;
+                return;
+            }
+            // Held now: the game piece controller keeps it off the robot, so don't undo its layer override
+            if (_pullingCoral && _coralController.HasPiece()) _clearingCoral = Array.Empty<Collider>();
+            _pullingCoral = null;
         }
 
         /// Per-collider layer override on the released coral: it passes through every Robot-layer collider until
