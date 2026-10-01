@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aff2b59de2c4a0c96d6b848990b46af, type: 3}
+  m_Name: GammaRay
+  m_EditorClassIdentifier: 
+  teamNumber: 3847
+  teamName: Spectrum
+  robotPrefab: {fileID: 4108337974173178762, guid: e6cc1672bd2cb4f4bacdf0630a991f96,
+    type: 3}
+  robotPreloadGamePiece: {fileID: 2185987706872048638, guid: 970bdf84a203d9a4b8dc602974341a07,
+    type: 3}
+  mainMenuPrefab: {fileID: 1988056642793775902, guid: 86eaaaf7867a0924b891597933ffd370,
+    type: 3}
+  hasAlternateRobot: 0
+  alternateRobotPrefab: {fileID: 0}
+  alternateMainMenuPrefab: {fileID: 0}
+  robotImage: {fileID: 21300000, guid: c6b1f9ffd00142638c7027a0a449a07e, type: 3}
+  tutorialCards:
+  - {fileID: 6829736770845459078, guid: 5c2f8956230fc5346b1845fdf15ea3e8, type: 3}
+  - {fileID: 6829736770845459078, guid: c6c896ca13256b34eb3d464246c473e1, type: 3}
+  - {fileID: 6829736770845459078, guid: a4468a4bc83225943a4a3fb5b44cee0d, type: 3}
+  alternateTutorialCards: []
+  autoClimbs: 1
+  alternateAutoClimbs: 0

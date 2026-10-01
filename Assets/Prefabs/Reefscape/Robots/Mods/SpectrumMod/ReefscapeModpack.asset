@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 713155721937481dbf0332a6dcf52567, type: 3}
+  m_Name: ReefscapeModpack
+  m_EditorClassIdentifier: 
+  modpackName: SpectrumMod
+  modpackVersion: 1.0.0
+  authorName: A2A1
+  description: Spectrum 3847's Compeition Robot Gamma Ray
+  robots:
+  - {fileID: 11400000, guid: d58884093a6673e43a9cd5bfafc256ad, type: 2}
