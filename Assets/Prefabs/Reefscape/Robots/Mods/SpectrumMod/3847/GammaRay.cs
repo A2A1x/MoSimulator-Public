@@ -192,6 +192,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private Quaternion _pincherHomeRot;
         private float _pincherAngle;
         private bool _rightBranch = true;
+        /// Spectrum's rightScore: the right branch (as seen from the robot) was picked. _rightBranch has swapBranchSides baked in for the twist
+        public bool RightBranch => _rightBranch != swapBranchSides;
 
         protected override void Start()
         {
