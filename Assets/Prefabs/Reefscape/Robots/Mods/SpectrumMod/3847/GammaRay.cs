@@ -121,6 +121,16 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private float pincherOpenAngle = 70;
         [SerializeField] private float pincherSpeed = 360;
 
+        [Header("Intake Roller (visual; spins about its own pivot while intaking, reversed while scoring)")]
+        [SerializeField] private Transform intakeRoller;
+        [Tooltip("Spin axis in the roller's local space. Negate to reverse direction")]
+        [SerializeField] private Vector3 rollerAxis = Vector3.right;
+        [SerializeField] private float rollerSpeed = 1440;
+        [Tooltip("Looping roller sound, played while the roller spins")]
+        [SerializeField] private AudioSource rollerAudio;
+        [Tooltip("Looping stall sound, played while holding algae")]
+        [SerializeField] private AudioSource algaeStallAudio;
+
         [Header("Game Piece States")]
         [SerializeField] private GamePieceState coralStowState;
         [SerializeField] private GamePieceState algaeStowState;
@@ -347,6 +357,20 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
             ApplyPose();
             UpdatePincher(hasAlgae || (wantAlgae && algaeIntake.GamePiece));
+            bool robotEnabled = BaseGameManager.Instance.RobotState != RobotState.Disabled;
+            float rollerDir = !robotEnabled ? 0 : wantCoral || wantAlgae ? 1 : CurrentSetpoint == ReefscapeSetpoints.Place ? -1 : 0;
+            if (intakeRoller) intakeRoller.Rotate(rollerAxis, rollerDir * rollerSpeed * Time.deltaTime, Space.Self);
+            if (rollerAudio && rollerAudio.isPlaying != (rollerDir != 0))
+            {
+                if (rollerDir != 0) rollerAudio.Play();
+                else rollerAudio.Stop();
+            }
+            bool stalling = robotEnabled && hasAlgae;
+            if (algaeStallAudio && algaeStallAudio.isPlaying != stalling)
+            {
+                if (stalling) algaeStallAudio.Play();
+                else algaeStallAudio.Stop();
+            }
             if (logJoints) LogJoints();
         }
 
