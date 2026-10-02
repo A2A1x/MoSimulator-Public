@@ -81145,7 +81145,7 @@ MonoBehaviour:
   alignToFaceCenter: 1
   twistStageDelay: 0.05
   elevatorAtTolerance: 1.15
-  shoulderScoreDelay: 0.1
+  shoulderScoreDelay: 0.15
   coralReleaseDelay: 0.15
   l4ReleaseDelay: 0.15
   scoreTime: 1.5
