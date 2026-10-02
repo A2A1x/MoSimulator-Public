@@ -546,7 +546,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             bool commitDirection = true, float? blockedOverride = null)
         {
             // Disabled (e.g. the auto->teleop transition): leave the joint braked, as GenericJoint.SetTargetAngle would
-            if (BaseGameManager.Instance.RobotState == RobotState.Disabled) return;
+            // The climber holds the robot up, so it keeps running (its GenericJoint has ignoreDisabledMode set)
+            if (joint != climber && BaseGameManager.Instance.RobotState == RobotState.Disabled) return;
             if (!_loops.TryGetValue(joint, out var loop)) _loops[joint] = loop = new AngleLoop();
 
             float current = JointAngle(joint, axis) + frameOffset;
