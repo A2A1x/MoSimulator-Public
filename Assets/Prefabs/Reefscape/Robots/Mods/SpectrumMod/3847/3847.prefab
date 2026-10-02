@@ -51709,9 +51709,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2610024140660753164}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.000008, y: -0.008586, z: -0.00077}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0.00000004371139, y: -0.000000021855692, z: 1, w: 0.00000004371139}
+  m_LocalPosition: {x: 0.0026643872, y: -0.034407645, z: -0.072863355}
+  m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 411502168102151691}
@@ -51723,7 +51723,7 @@ Transform:
   - {fileID: 3770841340292424680}
   - {fileID: 7758893446890014222}
   - {fileID: 7463871164822129451}
-  m_Father: {fileID: 888985204941361526}
+  m_Father: {fileID: 1008704992897954036}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2613876562600127236
 GameObject:
@@ -66963,7 +66963,6 @@ Transform:
   - {fileID: 3398549596005117435}
   - {fileID: 8122740858774263230}
   - {fileID: 3909024255305971055}
-  - {fileID: 6310837988247967553}
   m_Father: {fileID: 1008704992897954036}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3390326845031374656
@@ -80816,12 +80815,12 @@ MonoBehaviour:
     elbow: -104
     twist: 0
   lowAlgaePose:
-    elevator: 1
+    elevator: 2.5
     shoulder: 160
     elbow: -86
     twist: 179.9
   highAlgaePose:
-    elevator: 12
+    elevator: 13.5
     shoulder: 160
     elbow: -86
     twist: 179.9
@@ -80850,13 +80849,17 @@ MonoBehaviour:
   elevatorAtTolerance: 1.15
   shoulderScoreDelay: 0.3
   coralReleaseDelay: 0
-  l4ReleaseDelay: 0
+  l4ReleaseDelay: 0.25
   scoreTime: 2
   climberStow: 90
   climberDeploy: -20
   climberClimbed: 115
   coralIntake: {fileID: 1704005579095372211}
   algaeIntake: {fileID: 1494817448658629473}
+  algaePincher: {fileID: 6310837988247967553}
+  pincherAxis: {x: 1, y: 0, z: 0}
+  pincherOpenAngle: 70
+  pincherSpeed: 360
   coralStowState:
     name: Coral Stow State
     stateNum: 1
@@ -96845,6 +96848,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 888985204941361526}
+  - {fileID: 6310837988247967553}
   m_Father: {fileID: 1317509690213141977}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4907895662938144406

@@ -66,8 +66,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private SpectrumPose l3ScorePose = new SpectrumPose(14.6f, 30, -106.4f, 0);
         [SerializeField] private SpectrumPose l4Pose = new SpectrumPose(21.1f * 0.999f, 193.5f, -131.6f, 0);
         [SerializeField] private SpectrumPose l4ScorePose = new SpectrumPose(21.1f * 0.999f - 3, 145.8f, -104, 0);
-        [SerializeField] private SpectrumPose lowAlgaePose = new SpectrumPose(1, 160, -86, 179.9f);
-        [SerializeField] private SpectrumPose highAlgaePose = new SpectrumPose(12, 160, -86, 179.9f);
+        [SerializeField] private SpectrumPose lowAlgaePose = new SpectrumPose(2.5f, 160, -86, 179.9f);
+        [SerializeField] private SpectrumPose highAlgaePose = new SpectrumPose(13.5f, 160, -86, 179.9f);
         [SerializeField] private SpectrumPose processorPose = new SpectrumPose(0, -143.877f, 64.072f, 0);
         [SerializeField] private SpectrumPose bargePose = new SpectrumPose(21.1f * 0.999f, 180, -180, 179.9f);
         [SerializeField] private SpectrumPose climbPose = new SpectrumPose(0, 45, 180, 179.9f);
@@ -108,6 +108,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [Header("Intakes")]
         [SerializeField] private ReefscapeGamePieceIntake coralIntake;
         [SerializeField] private ReefscapeGamePieceIntake algaeIntake;
+
+        [Header("Algae Pincher (constant force spring holds it home; the algae pushes it open)")]
+        [SerializeField] private Transform algaePincher;
+        [Tooltip("Hinge axis in the pincher's local space; it pivots about its own transform")]
+        [SerializeField] private Vector3 pincherAxis = Vector3.right;
+        [Tooltip("Degrees the algae pushes the pincher open. Negate if it opens into the claw")]
+        [SerializeField] private float pincherOpenAngle = 70;
+        [SerializeField] private float pincherSpeed = 360;
 
         [Header("Game Piece States")]
         [SerializeField] private GamePieceState coralStowState;
@@ -161,6 +169,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [Tooltip("Coral intake only switches sides once the station is this far (dot of forward and direction) past side-on, so it doesn't flicker")]
         [SerializeField] private float stationSideDeadband = 0.2f;
         private Vector3 _baseAlignOffset;
+        private Quaternion _pincherHomeRot;
+        private float _pincherAngle;
         private bool _rightBranch = true;
 
         protected override void Start()
@@ -187,6 +197,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 .ToArray();
             _stations = FindObjectsByType<CoralStation>(FindObjectsSortMode.None);
             if (autoAlign) _baseAlignOffset = autoAlign.offset;
+            if (algaePincher) _pincherHomeRot = algaePincher.localRotation;
 
             RobotGamePieceController.SetPreload(coralStowState);
             _coralController = RobotGamePieceController.GetPieceByName(ReefscapeGamePieceType.Coral.ToString());
@@ -318,6 +329,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             _algaeController.SetTargetState(algaeStowState);
 
             ApplyPose();
+            UpdatePincher(hasAlgae || (wantAlgae && algaeIntake.GamePiece));
             if (logJoints) LogJoints();
         }
 
@@ -358,6 +370,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 cols.Add(cmdSpin.ToString("F1", inv));
             }
             _log.WriteLine(string.Join(",", cols));
+        }
+
+        /// Visual only: open while an algae is in (or being pulled into) the claw, sprung home otherwise.
+        private void UpdatePincher(bool algaeInClaw)
+        {
+            if (!algaePincher) return;
+            _pincherAngle = Mathf.MoveTowards(_pincherAngle, algaeInClaw ? pincherOpenAngle : 0, pincherSpeed * Time.deltaTime);
+            algaePincher.localRotation = _pincherHomeRot * Quaternion.AngleAxis(_pincherAngle, pincherAxis);
         }
 
         private void OnDestroy() => _log?.Dispose();
