@@ -21,7 +21,7 @@ PrefabInstance:
     - target: {fileID: 6000603204863370303, guid: 4f6390b7332e92b43aee0cf7f4734f72,
         type: 3}
       propertyPath: m_text
-      value: Press climb once to deploy the climber and again to pull up
+      value: Make sure the bumper foot is locked into the cage so the climb works
       objectReference: {fileID: 0}
     - target: {fileID: 6000603204863370303, guid: 4f6390b7332e92b43aee0cf7f4734f72,
         type: 3}
@@ -32,7 +32,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 20e0397649514844b83f44b5210dd279,
+      objectReference: {fileID: 21300000, guid: 7457c48db5f148dab1e394577fdb116a,
         type: 3}
     - target: {fileID: 7647712989278884331, guid: 4f6390b7332e92b43aee0cf7f4734f72,
         type: 3}
