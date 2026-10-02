@@ -30,6 +30,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private GenericJoint wrist;
         [SerializeField] private GenericJoint climber;
         [SerializeField] private ReefscapeAutoAlign autoAlign;
+        [Tooltip("Bumper renderer. RobotBase only recolours its first material slot (the inside faces), so the alliance material is copied to the rest")]
+        [SerializeField] private MeshRenderer bumpers;
 
         [Header("PIDs")]
         [SerializeField] private PidConstants shoulderPid;
@@ -246,6 +248,13 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             elbow.UpdatePid(elbowPid);
             wrist.UpdatePid(wristPid);
             climber.UpdatePid(climberPid);
+
+            var bumperMat = bumpers.sharedMaterial;
+            if (bumperMat != _bumperMat)
+            {
+                _bumperMat = bumperMat;
+                bumpers.sharedMaterials = new[] { bumperMat, bumperMat, bumperMat };
+            }
         }
 
         private void FixedUpdate()
@@ -547,6 +556,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
         private readonly Dictionary<GenericJoint, AngleLoop> _loops = new();
         private float _pidStartTime;
+        private Material _bumperMat;
 
         /// Drives a rotating joint to `target` (degrees, in a frame rotated `frameOffset` from the joint's parent),
         /// replacing GenericJoint.SetTargetAngle so the angle reading above is used. With commitDirection the
