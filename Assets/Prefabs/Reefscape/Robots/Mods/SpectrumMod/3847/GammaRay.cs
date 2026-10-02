@@ -50,6 +50,10 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [Tooltip("Spectrum measures the elbow against the robot, not the upper arm (their sim mounts it with absAngle = true). " +
                  "Unity's elbow joint is relative to the shoulder, so the shoulder angle is subtracted.")]
         [SerializeField] private bool elbowIsAbsolute = true;
+        [Tooltip("Shoulder angle (front side, robot degrees) the arm never swings through; mirrored when reversed")]
+        [SerializeField] private float shoulderNoGoAngle = -155;
+        [Tooltip("Elbow angle (robot degrees from home, same frame as the elbow setpoints) the forearm never swings through; mirrored when reversed")]
+        [SerializeField] private float elbowNoGoAngle = 180;
         [Tooltip("Tick a joint if it moves the wrong way compared to the real robot")]
         [SerializeField] private bool invertShoulder, invertElbow, invertTwist, invertClimber;
 
@@ -486,11 +490,17 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             float shoulderAngle = ToUnity(_shoulderTarget, shoulderHome, invertShoulder);
             // An absolute elbow holds its angle against the robot, so it compensates for where the shoulder actually is
             float shoulderActual = JointAngle(shoulder, JointAxis.X);
-            Drive(shoulder, JointAxis.X, shoulderPid, shoulderAngle);
+            // No-go angles go through the same robot-code -> Unity conversion (and reverse mirroring) as the targets,
+            // so each lands in the frame its joint is driven in: the shoulder's own, the elbow's absolute one
+            float elbowNoGo = elbowNoGoAngle + elbowHome;
+            if (_reversed) elbowNoGo = -elbowNoGo;
+            Drive(shoulder, JointAxis.X, shoulderPid, shoulderAngle,
+                blockedOverride: ToUnity(_reversed ? -shoulderNoGoAngle : shoulderNoGoAngle, shoulderHome, invertShoulder));
             // The elbow's frame (the shoulder) sweeps under it, so a direction fixed in that frame can be carried
             // past and trap it; it takes the shortest way in its own (absolute) frame every tick instead
             Drive(elbow, JointAxis.X, elbowPid, ToUnity(_elbowTarget, elbowHome, invertElbow),
-                elbowIsAbsolute ? shoulderActual : 0, commitDirection: false);
+                elbowIsAbsolute ? shoulderActual : 0, commitDirection: false,
+                blockedOverride: ToUnity(elbowNoGo, elbowHome, invertElbow));
             // Branch twists never pass through the angle opposite wristFlipVia (mirrored when reversed)
             float? wristBlocked = _branchTwist
                 ? ToUnity((_reversed ? wristFlipVia : wristFlipVia + 180), twistHome, invertTwist)
