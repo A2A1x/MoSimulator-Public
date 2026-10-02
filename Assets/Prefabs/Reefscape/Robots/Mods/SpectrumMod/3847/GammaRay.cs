@@ -6,6 +6,7 @@ using System.Linq;
 using Games.Reefscape.Enums;
 using Games.Reefscape.FieldScripts;
 using Games.Reefscape.GamePieceSystem;
+using Games.Reefscape.Scoring.Scorers;
 using Games.Reefscape.Robots;
 using MoSimCore.BaseClasses.GameManagement;
 using MoSimCore.Enums;
@@ -72,6 +73,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private SpectrumPose bargePose = new SpectrumPose(21.1f * 0.999f, 180, -180, 179.9f);
         [SerializeField] private SpectrumPose climbPose = new SpectrumPose(0, 45, 180, 179.9f);
 
+        [Tooltip("Barge and its score: the wrist turrets so the claw faces the barge (bargePose's twist faces the robot's front)")]
+        [SerializeField] private bool bargeTwistTracksBarge = true;
+
         [Tooltip("Score off the back when the back faces the reef (Spectrum's reverse). Off = always score off the front")]
         [SerializeField] private bool allowReverse = true;
 
@@ -130,12 +134,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private bool coralIgnoresRobotAfterScore;
         [Tooltip("Seconds a just-released coral ignores the whole robot, so it can't snag on the arm")]
         [SerializeField] private float coralClearTime = 0.5f;
+        [Tooltip("Seconds an L1 coral ignores the wrist after release")]
+        [SerializeField] private float l1WristClearTime = 1.5f;
 
         [Header("Release Forces")]
         [SerializeField] private Vector3 coralReleaseForce = new Vector3(0, 0, 6);
         [SerializeField] private Vector3 l1ReleaseForce = new Vector3(0, 0, 2);
         [SerializeField] private Vector3 algaeReleaseForce = new Vector3(0, 0, 2.5f);
-        [SerializeField] private Vector3 bargeReleaseForce = new Vector3(0, 3, -1.5f); // barge pose reaches over the back, so -z
+        [SerializeField] private Vector3 bargeReleaseForce = new Vector3(0, 3.75f, -1.9f);
 
         private RobotGamePieceController<ReefscapeGamePiece, ReefscapeGamePieceData>.GamePieceControllerNode _coralController;
         private RobotGamePieceController<ReefscapeGamePiece, ReefscapeGamePieceData>.GamePieceControllerNode _algaeController;
@@ -156,6 +162,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private float _clearUntil;
         private GameObject _pullingPiece;
         private readonly List<(Collider piece, Collider robot)> _ignoredPairs = new();
+        private readonly List<(Collider piece, Collider wrist)> _wristIgnoredPairs = new();
+        private float _wristClearUntil;
         private float TimeInPhase => Time.time - _phaseStart;
 
         // Per joint: the target it is moving to and the angle it must not sweep through on the way
@@ -163,6 +171,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
         private AlignNode[] _reefFaces;
         private CoralStation[] _stations;
+        private BoxCollider[] _barges;
+        private GameObject _ownReef;
         private bool _stationBehind;
         private bool _stationMode;   // coral intake: false = ground (default), true = human player station; RobotSpecial toggles, as on 2910
         private bool _robotSpecialPressed;
@@ -196,6 +206,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 .Where(node => node != null)
                 .ToArray();
             _stations = FindObjectsByType<CoralStation>(FindObjectsSortMode.None);
+            _ownReef = GameObject.Find(Alliance == Alliance.Blue ? "BlueReef" : "RedReef");
+            _barges = FindObjectsByType<BargeScorer>(FindObjectsSortMode.None)
+                .Select(b => b.GetComponent<BoxCollider>()).Where(c => c).ToArray();
             if (autoAlign) _baseAlignOffset = autoAlign.offset;
             if (algaePincher) _pincherHomeRot = algaePincher.localRotation;
 
@@ -224,12 +237,16 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             UpdateBranchSelection();
             CheckStationMode();
             if (_clearingCoral.Length > 0 && Time.time >= _clearUntil) SetCoralIgnoresRobot(Array.Empty<Collider>());
+            if (_wristIgnoredPairs.Count > 0 && Time.time >= _wristClearUntil) SetCoralIgnoresWrist(Array.Empty<Collider>());
 
             if (CurrentSetpoint != _phaseSetpoint)
             {
                 _phaseSetpoint = CurrentSetpoint;
                 _phaseStart = Time.time;
                 _released = false;
+                // The base only updates FacingReef on L2-L4; same check as its (private) CheckFacingReef
+                if (CurrentSetpoint == ReefscapeSetpoints.L1 && _ownReef)
+                    FacingReef = Vector3.Dot(transform.forward, _ownReef.transform.position - transform.position) > 0;
             }
 
             bool hasCoral = _coralController.HasPiece();
@@ -275,7 +292,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                     if (TimeInPhase >= scoreTime) SetState(ReefscapeSetpoints.Stow);
                     break;
                 case ReefscapeSetpoints.L1:
-                    SetPose(l1Pose);
+                    SetPose(l1Pose, reef: true);
                     break;
                 case ReefscapeSetpoints.L2:
                     SetPose(l2Pose, reef: true, branch: true);
@@ -403,6 +420,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         {
             float s = _pose.shoulder, e = _pose.elbow;
             float t = _branchTwist ? (_rightBranch ? twistRightBranch : twistLeftBranch) : _pose.twist;
+            if (bargeTwistTracksBarge && (CurrentSetpoint == ReefscapeSetpoints.Barge ||
+                                          CurrentSetpoint == ReefscapeSetpoints.Place && LastSetpoint == ReefscapeSetpoints.Barge))
+                t += BargeTwistOffset();
             if (_reversed)
             {
                 s = -s;
@@ -451,6 +471,21 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 : (float?)null;
             Drive(wrist, JointAxis.Y, wristPid, ToUnity(_twistTarget, twistHome, invertTwist), blockedOverride: wristBlocked);
             Drive(climber, JointAxis.Z, climberPid, ToUnity(_climberTarget, climberHome, invertClimber));
+        }
+
+        /// Robot-code degrees to turn the twist from the robot's front to the nearest point on the barge,
+        /// measured about the wrist's actual axis so the sign comes out right whichever way the wrist is mounted.
+        private float BargeTwistOffset()
+        {
+            if (_barges.Length == 0) return 0;
+            var closest = _barges.Select(b => b.ClosestPoint(wrist.transform.position))
+                .OrderBy(p => (p - wrist.transform.position).sqrMagnitude).First();
+            var axis = wrist.transform.TransformDirection(Vector3.up);
+            var toBarge = Vector3.ProjectOnPlane(closest - wrist.transform.position, axis);
+            var front = Vector3.ProjectOnPlane(transform.forward, axis);
+            if (toBarge.sqrMagnitude < 1e-6f || front.sqrMagnitude < 1e-6f) return 0;
+            float unity = Vector3.SignedAngle(front, toBarge, axis);
+            return invertTwist ? -unity : unity;
         }
 
         private static Vector3 AxisVector(JointAxis axis) =>
@@ -572,10 +607,17 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             }
             if (_coralController.HasPiece())
             {
-                var coral = _coralController.controller ? _coralController.controller.GetComponentsInChildren<Collider>() : Array.Empty<Collider>();
+                var piece = _coralController.controller;
                 var force = LastSetpoint == ReefscapeSetpoints.L1 ? l1ReleaseForce : coralReleaseForce;
                 if (_reversed) force.z = -force.z; // scoring out the back pushes the other way
                 if (!_coralController.ReleaseGamePieceWithForce(force)) return false;
+                // While held, the piece's colliders are parented to the robot; Release moves them back onto the piece
+                var coral = piece ? piece.GetComponentsInChildren<Collider>() : Array.Empty<Collider>();
+                if (LastSetpoint == ReefscapeSetpoints.L1)
+                {
+                    SetCoralIgnoresWrist(coral);
+                    _wristClearUntil = Time.time + l1WristClearTime;
+                }
                 if (!coralIgnoresRobotAfterScore) return true;
                 SetCoralIgnoresRobot(coral);
                 _clearUntil = Time.time + coralClearTime;
@@ -624,6 +666,21 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             {
                 Physics.IgnoreCollision(p, r, true);
                 _ignoredPairs.Add((p, r));
+            }
+        }
+
+        /// An L1 coral drops out past the wrist, so it ignores just the wrist's colliders for l1WristClearTime.
+        /// Passing an empty array restores the last set.
+        private void SetCoralIgnoresWrist(Collider[] coral)
+        {
+            foreach (var (c, w) in _wristIgnoredPairs)
+                if (c && w) Physics.IgnoreCollision(c, w, false);
+            _wristIgnoredPairs.Clear();
+            foreach (var w in wrist.GetComponentsInChildren<Collider>())
+            foreach (var c in coral)
+            {
+                Physics.IgnoreCollision(c, w, true);
+                _wristIgnoredPairs.Add((c, w));
             }
         }
 

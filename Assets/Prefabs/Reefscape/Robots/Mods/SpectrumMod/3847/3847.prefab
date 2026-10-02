@@ -80839,6 +80839,7 @@ MonoBehaviour:
     shoulder: 45
     elbow: 180
     twist: 179.9
+  bargeTwistTracksBarge: 1
   allowReverse: 1
   twistLeftBranch: 90
   twistRightBranch: 270
@@ -80847,10 +80848,10 @@ MonoBehaviour:
   alignToFaceCenter: 1
   twistStageDelay: 0.05
   elevatorAtTolerance: 1.15
-  shoulderScoreDelay: 0.3
-  coralReleaseDelay: 0
-  l4ReleaseDelay: 0.25
-  scoreTime: 2
+  shoulderScoreDelay: 0.2
+  coralReleaseDelay: 0.15
+  l4ReleaseDelay: 0.15
+  scoreTime: 1.5
   climberStow: 90
   climberDeploy: -20
   climberClimbed: 115
@@ -80877,10 +80878,11 @@ MonoBehaviour:
   logJoints: 1
   coralIgnoresRobotAfterScore: 0
   coralClearTime: 0.8
+  l1WristClearTime: 1.5
   coralReleaseForce: {x: 0, y: 0, z: 0}
-  l1ReleaseForce: {x: 0, y: 0, z: 0}
+  l1ReleaseForce: {x: 0, y: 2, z: 0}
   algaeReleaseForce: {x: 0, y: 0, z: 2.5}
-  bargeReleaseForce: {x: 0, y: 3, z: -1.5}
+  bargeReleaseForce: {x: 0, y: 3.75, z: -1.9}
   stationSideDeadband: 0.2
 --- !u!114 &8296451281207985909
 MonoBehaviour:
