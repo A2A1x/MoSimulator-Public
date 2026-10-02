@@ -81024,13 +81024,13 @@ MonoBehaviour:
     kP: 0.5
     kI: 0
     kD: 0.1
-    Max: 4
+    Max: 5
     Isaturation: 0
   wristPid:
     kP: 0.5
     kI: 0
     kD: 0.1
-    Max: 12
+    Max: 7
     Isaturation: 0
   climberPid:
     kP: 1
@@ -81045,6 +81045,8 @@ MonoBehaviour:
   twistHome: 0
   climberHome: 90
   elbowIsAbsolute: 1
+  shoulderNoGoAngle: -155
+  elbowNoGoAngle: 180
   invertShoulder: 0
   invertElbow: 0
   invertTwist: 0
@@ -81143,7 +81145,7 @@ MonoBehaviour:
   alignToFaceCenter: 1
   twistStageDelay: 0.05
   elevatorAtTolerance: 1.15
-  shoulderScoreDelay: 0.15
+  shoulderScoreDelay: 0.1
   coralReleaseDelay: 0.15
   l4ReleaseDelay: 0.15
   scoreTime: 1.5
