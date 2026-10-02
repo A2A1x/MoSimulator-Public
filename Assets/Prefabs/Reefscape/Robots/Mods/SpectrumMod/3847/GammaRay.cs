@@ -54,6 +54,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
         [Header("Poses (Spectrum 'ex' values; reef poses are mirrored automatically when scoring off the back)")]
         [SerializeField] private SpectrumPose stowPose = new SpectrumPose(0, 0, 180, 90);
+        [Tooltip("Stow while holding algae: wrist turned 90 from the normal stow")]
+        [SerializeField] private SpectrumPose algaeStowPose = new SpectrumPose(0, 0, 180, 179.9f);
         [SerializeField] private SpectrumPose coralIntakePose = new SpectrumPose(0, -9.2f, -158.7f, 0);
         [SerializeField] private SpectrumPose groundCoralIntakePose = new SpectrumPose(0, 4, 76, 179.9f);
         [SerializeField] private SpectrumPose algaeIntakePose = new SpectrumPose(4.5f, 0, 64, 0);
@@ -124,8 +126,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [Header("Release Forces")]
         [SerializeField] private Vector3 coralReleaseForce = new Vector3(0, 0, 6);
         [SerializeField] private Vector3 l1ReleaseForce = new Vector3(0, 0, 2);
-        [SerializeField] private Vector3 algaeReleaseForce = new Vector3(0, 0, 1.5f);
-        [SerializeField] private Vector3 bargeReleaseForce = new Vector3(0, 10, 1.5f);
+        [SerializeField] private Vector3 algaeReleaseForce = new Vector3(0, 0, 2.5f);
+        [SerializeField] private Vector3 bargeReleaseForce = new Vector3(0, 3, -1.5f); // barge pose reaches over the back, so -z
 
         private RobotGamePieceController<ReefscapeGamePiece, ReefscapeGamePieceData>.GamePieceControllerNode _coralController;
         private RobotGamePieceController<ReefscapeGamePiece, ReefscapeGamePieceData>.GamePieceControllerNode _algaeController;
@@ -144,7 +146,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private Collider[] _clearingCoral = Array.Empty<Collider>();
         private int _robotMask;
         private float _clearUntil;
-        private GameObject _pullingCoral;
+        private GameObject _pullingPiece;
+        private readonly List<(Collider piece, Collider robot)> _ignoredPairs = new();
         private float TimeInPhase => Time.time - _phaseStart;
 
         // Per joint: the target it is moving to and the angle it must not sweep through on the way
@@ -228,7 +231,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             switch (CurrentSetpoint)
             {
                 case ReefscapeSetpoints.Stow:
-                    SetPose(stowPose);
+                    SetPose(hasAlgae ? algaeStowPose : stowPose);
                     break;
                 case ReefscapeSetpoints.Intake:
                     bool coralMode = CurrentRobotMode == ReefscapeRobotMode.Coral;
@@ -310,7 +313,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
             _coralController.RequestIntake(coralIntake, wantCoral);
             _algaeController.RequestIntake(algaeIntake, wantAlgae);
-            KeepPulledCoralOffRobot(wantCoral);
+            KeepPulledPieceOffRobot(wantAlgae ? algaeIntake : coralIntake, wantCoral || wantAlgae);
             _coralController.SetTargetState(coralStowState);
             _algaeController.SetTargetState(algaeStowState);
 
@@ -560,22 +563,48 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             return true;
         }
 
-        /// The intake pulls coral in with forces, and until it's secured the coral still collides with the robot.
-        /// A coral that comes in tilted jams against the arm while the pull keeps pushing, and gets flung; so it
-        /// ignores the robot while being pulled (and for coralClearTime after, if the pull is abandoned).
-        private void KeepPulledCoralOffRobot(bool intaking)
+        /// The intakes pull pieces in with forces, and until secured the piece still collides with the robot.
+        /// A coral that comes in tilted jams against the arm and gets flung, so it ignores the whole robot while
+        /// pulled (and for coralClearTime after, if the pull is abandoned). An algae jams against the claw and never
+        /// reaches the target, but ignoring the whole robot lets it sink into the wrist; so it only ignores the
+        /// robot colliders it would overlap sitting at the target, and everything else still pushes it out.
+        private void KeepPulledPieceOffRobot(ReefscapeGamePieceIntake intake, bool intaking)
         {
-            var pulling = intaking ? coralIntake.GamePiece : null;
-            if (pulling && !coralIntake.securedGamePiece)
+            var pulling = intaking ? intake.GamePiece : null;
+            if (pulling && !intake.securedGamePiece)
             {
-                if (pulling != _pullingCoral) SetCoralIgnoresRobot(pulling.GetComponentsInChildren<Collider>());
-                _pullingCoral = pulling;
+                if (pulling != _pullingPiece)
+                {
+                    var piece = pulling.GetComponentsInChildren<Collider>();
+                    if (intake == algaeIntake) IgnoreRobotAtTarget(piece, intake.transform.position);
+                    else SetCoralIgnoresRobot(piece);
+                }
+                _pullingPiece = pulling;
                 _clearUntil = Time.time + coralClearTime;
                 return;
             }
+            IgnoreRobotAtTarget(Array.Empty<Collider>(), Vector3.zero);
             // Held now: the game piece controller keeps it off the robot, so don't undo its layer override
-            if (_pullingCoral && _coralController.HasPiece()) _clearingCoral = Array.Empty<Collider>();
-            _pullingCoral = null;
+            if (_pullingPiece && (_coralController.HasPiece() || _algaeController.HasPiece())) _clearingCoral = Array.Empty<Collider>();
+            _pullingPiece = null;
+        }
+
+        /// Ignores collisions between the piece and the robot colliders it overlaps when centered on `target`
+        /// (the algae intake's target is its own transform). Passing an empty array restores the last set.
+        private void IgnoreRobotAtTarget(Collider[] piece, Vector3 target)
+        {
+            foreach (var (p, r) in _ignoredPairs)
+                if (p && r) Physics.IgnoreCollision(p, r, false);
+            _ignoredPairs.Clear();
+            if (piece.Length == 0) return;
+
+            float radius = piece.Max(c => c.bounds.extents.magnitude / Mathf.Sqrt(3)); // sphere: extents are all r
+            foreach (var r in Physics.OverlapSphere(target, radius, _robotMask))
+            foreach (var p in piece)
+            {
+                Physics.IgnoreCollision(p, r, true);
+                _ignoredPairs.Add((p, r));
+            }
         }
 
         /// Per-collider layer override on the released coral: it passes through every Robot-layer collider until
