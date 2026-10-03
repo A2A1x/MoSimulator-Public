@@ -108,8 +108,10 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private float coralReleaseDelay = 0.2f;
         [Tooltip("The real robot doesn't run its intake at L4; the score motion pulls the coral off. Released when the shoulder starts moving.")]
         [SerializeField] private float l4ReleaseDelay = 0.3f;
-        [Tooltip("RobotStates.scoreTime: after this long in the score state the robot goes home. The coral intake also stays off this long after a coral is released")]
+        [Tooltip("RobotStates.scoreTime: after this long in the score state the robot goes home")]
         [SerializeField] private float scoreTime = 2.0f;
+        [Tooltip("Seconds the coral intake stays off after a coral is released, so a quick switch to intake can't regrab it")]
+        [SerializeField] private float intakeLockoutTime = 0.75f;
 
         [Header("Climber (robot degrees)")]
         [SerializeField] private float climberStow = 90;
@@ -662,7 +664,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 var force = LastSetpoint == ReefscapeSetpoints.L1 ? l1ReleaseForce : coralReleaseForce;
                 if (_reversed) force.z = -force.z; // scoring out the back pushes the other way
                 if (!_coralController.ReleaseGamePieceWithForce(force)) return false;
-                _coralIntakeBlockedUntil = Time.time + scoreTime; // so a quick switch to intake can't regrab it
+                _coralIntakeBlockedUntil = Time.time + intakeLockoutTime;
                 bool stow = LastSetpoint == ReefscapeSetpoints.Stow;
                 if (stow) piece.GamePiece.rigidbody.AddForce(Vector3.up * stowEjectUpVelocity, ForceMode.VelocityChange);
                 // While held, the piece's colliders are parented to the robot; Release moves them back onto the piece
