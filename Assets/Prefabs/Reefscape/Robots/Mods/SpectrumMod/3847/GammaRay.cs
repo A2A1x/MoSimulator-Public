@@ -154,6 +154,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [Tooltip("Seconds an L1 coral ignores the whole robot after release, so scraping the arm on the way out can't spin it (always on)")]
         [FormerlySerializedAs("l1WristClearTime")]
         [SerializeField] private float l1ClearTime = 1.5f;
+        [Tooltip("Seconds a coral ejected from stow ignores the robot (always on)")]
+        [SerializeField] private float stowClearTime = 0.5f;
 
         [Header("Release Forces")]
         [SerializeField] private Vector3 coralReleaseForce = new Vector3(0, 0, 6);
@@ -661,18 +663,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 if (_reversed) force.z = -force.z; // scoring out the back pushes the other way
                 if (!_coralController.ReleaseGamePieceWithForce(force)) return false;
                 _coralIntakeBlockedUntil = Time.time + scoreTime; // so a quick switch to intake can't regrab it
-                if (LastSetpoint == ReefscapeSetpoints.Stow)
-                {
-                    // Ejecting from stow: a small pop up, and it keeps colliding with the robot
-                    piece.GamePiece.rigidbody.AddForce(Vector3.up * stowEjectUpVelocity, ForceMode.VelocityChange);
-                    return true;
-                }
+                bool stow = LastSetpoint == ReefscapeSetpoints.Stow;
+                if (stow) piece.GamePiece.rigidbody.AddForce(Vector3.up * stowEjectUpVelocity, ForceMode.VelocityChange);
                 // While held, the piece's colliders are parented to the robot; Release moves them back onto the piece
                 var coral = piece ? piece.GetComponentsInChildren<Collider>() : Array.Empty<Collider>();
                 bool l1 = LastSetpoint == ReefscapeSetpoints.L1;
-                if (!l1 && !coralIgnoresRobotAfterScore) return true;
+                if (!l1 && !stow && !coralIgnoresRobotAfterScore) return true;
                 SetCoralIgnoresRobot(coral);
-                _clearUntil = Time.time + (l1 ? l1ClearTime : coralClearTime);
+                _clearUntil = Time.time + (l1 ? l1ClearTime : stow ? stowClearTime : coralClearTime);
             }
             return true;
         }
