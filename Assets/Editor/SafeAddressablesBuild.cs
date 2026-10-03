@@ -13,7 +13,10 @@ namespace Editor
     public static class SafeAddressablesBuild
     {
         [MenuItem("Tools/Build Addressables (fix null SubAssets)")]
-        public static void Run()
+        public static void RunFromMenu() => Run();
+
+        /// Returns true if the build succeeded.
+        public static bool Run()
         {
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             foreach (var group in settings.groups)
@@ -29,9 +32,12 @@ namespace Editor
 
             AddressableAssetSettings.BuildPlayerContent(out AddressablesPlayerBuildResult result);
             if (string.IsNullOrEmpty(result.Error))
+            {
                 Debug.Log($"[Build Addressables] Build succeeded for {EditorUserBuildSettings.activeBuildTarget}.");
-            else
-                Debug.LogError($"[Build Addressables] Build failed: {result.Error}");
+                return true;
+            }
+            Debug.LogError($"[Build Addressables] Build failed: {result.Error}");
+            return false;
         }
     }
 }

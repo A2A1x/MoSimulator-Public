@@ -2,8 +2,9 @@
 # Run after Unity: Addressables Groups -> Build -> New Build -> Default Build Script.
 # Mac/Linux: switch the build target (File -> Build Settings) to that platform before building, then pass -Platform.
 #   .\install-mod.ps1                    # install the Windows build locally
-#   .\install-mod.ps1 -Zip               # SpectrumMod-Windows.zip
-#   .\install-mod.ps1 -Platform OSX      # SpectrumMod-OSX.zip (non-Windows always zips)
+#   .\install-mod.ps1 -Zip               # SpectrumMod-v<modpack version>-Windows.zip
+#   .\install-mod.ps1 -Platform OSX      # SpectrumMod-v<modpack version>-MacOS.zip (non-Windows always zips)
+# Or build, zip and install everything in one go from Unity: Tools > Build Mod (all platforms)
 param([string]$Group = "SpectrumMod", [string]$Dll = "GammaRay",
       [ValidateSet("Windows", "OSX", "Linux")][string]$Platform = "Windows", [switch]$Zip)
 $ErrorActionPreference = "Stop"
@@ -33,7 +34,10 @@ Copy-Item "$root\Library\ScriptAssemblies\$Dll.dll" $dest
 Get-ChildItem $dest | Format-Table Name, Length, LastWriteTime
 if ($install) { Write-Host "Installed to $dest"; return }
 
-$zipPath = "$root\$Group-$Platform.zip"
+# Named after the modpack version, e.g. SpectrumMod-v2.0.0-beta-MacOS.zip
+$version = [regex]::Match((Get-Content "$root\Assets\Prefabs\Reefscape\Robots\Mods\$Group\ReefscapeModpack.asset" -Raw), 'modpackVersion: (\S+)').Groups[1].Value
+$name = if ($Platform -eq "OSX") { "MacOS" } else { $Platform }
+$zipPath = "$root\$Group-v$version-$name.zip"
 Compress-Archive -Path $dest -DestinationPath $zipPath -Force
 Remove-Item (Split-Path $dest) -Recurse -Force
 Write-Host "Wrote $zipPath"
