@@ -155,7 +155,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [FormerlySerializedAs("l1WristClearTime")]
         [SerializeField] private float l1ClearTime = 1.5f;
         [Tooltip("Seconds a coral ejected from stow ignores the robot (always on)")]
-        [SerializeField] private float stowClearTime = 0.5f;
+        [SerializeField] private float stowClearTime = 0.1f;
 
         [Header("Release Forces")]
         [SerializeField] private Vector3 coralReleaseForce = new Vector3(0, 0, 6);
