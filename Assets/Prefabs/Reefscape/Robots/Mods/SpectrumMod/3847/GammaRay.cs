@@ -111,7 +111,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [Tooltip("RobotStates.scoreTime: after this long in the score state the robot goes home")]
         [SerializeField] private float scoreTime = 2.0f;
         [Tooltip("Seconds the coral intake stays off after a coral is released, so a quick switch to intake can't regrab it")]
-        [SerializeField] private float intakeLockoutTime = 0.75f;
+        [SerializeField] private float intakeLockoutTime = 0.35f;
 
         [Header("Climber (robot degrees)")]
         [SerializeField] private float climberStow = 90;
