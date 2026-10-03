@@ -160,6 +160,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private Vector3 l1ReleaseForce = new Vector3(0, 0, 2);
         [SerializeField] private Vector3 algaeReleaseForce = new Vector3(0, 0, 2.5f);
         [SerializeField] private Vector3 bargeReleaseForce = new Vector3(0, 3.75f, -1.9f);
+        [Tooltip("m/s straight up added to a coral ejected from stow")]
+        [SerializeField] private float stowEjectUpVelocity = 1;
 
         private RobotGamePieceController<ReefscapeGamePiece, ReefscapeGamePieceData>.GamePieceControllerNode _coralController;
         private RobotGamePieceController<ReefscapeGamePiece, ReefscapeGamePieceData>.GamePieceControllerNode _algaeController;
@@ -659,6 +661,12 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 if (_reversed) force.z = -force.z; // scoring out the back pushes the other way
                 if (!_coralController.ReleaseGamePieceWithForce(force)) return false;
                 _coralIntakeBlockedUntil = Time.time + scoreTime; // so a quick switch to intake can't regrab it
+                if (LastSetpoint == ReefscapeSetpoints.Stow)
+                {
+                    // Ejecting from stow: a small pop up, and it keeps colliding with the robot
+                    piece.GamePiece.rigidbody.AddForce(Vector3.up * stowEjectUpVelocity, ForceMode.VelocityChange);
+                    return true;
+                }
                 // While held, the piece's colliders are parented to the robot; Release moves them back onto the piece
                 var coral = piece ? piece.GetComponentsInChildren<Collider>() : Array.Empty<Collider>();
                 bool l1 = LastSetpoint == ReefscapeSetpoints.L1;
