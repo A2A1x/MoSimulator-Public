@@ -16,6 +16,7 @@ using RobotFramework.Controllers.PidSystems;
 using RobotFramework.Enums;
 using RobotFramework.GamePieceSystem;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 {
@@ -107,7 +108,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private float coralReleaseDelay = 0.2f;
         [Tooltip("The real robot doesn't run its intake at L4; the score motion pulls the coral off. Released when the shoulder starts moving.")]
         [SerializeField] private float l4ReleaseDelay = 0.3f;
-        [Tooltip("RobotStates.scoreTime: after this long in the score state the robot goes home")]
+        [Tooltip("RobotStates.scoreTime: after this long in the score state the robot goes home. The coral intake also stays off this long after a coral is released")]
         [SerializeField] private float scoreTime = 2.0f;
 
         [Header("Climber (robot degrees)")]
@@ -150,8 +151,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private bool coralIgnoresRobotAfterScore;
         [Tooltip("Seconds a just-released coral ignores the whole robot, so it can't snag on the arm")]
         [SerializeField] private float coralClearTime = 0.5f;
-        [Tooltip("Seconds an L1 coral ignores the wrist after release")]
-        [SerializeField] private float l1WristClearTime = 1.5f;
+        [Tooltip("Seconds an L1 coral ignores the whole robot after release, so scraping the arm on the way out can't spin it (always on)")]
+        [FormerlySerializedAs("l1WristClearTime")]
+        [SerializeField] private float l1ClearTime = 1.5f;
 
         [Header("Release Forces")]
         [SerializeField] private Vector3 coralReleaseForce = new Vector3(0, 0, 6);
@@ -176,10 +178,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private Collider[] _clearingCoral = Array.Empty<Collider>();
         private int _robotMask;
         private float _clearUntil;
+        private float _coralIntakeBlockedUntil;
         private GameObject _pullingPiece;
         private readonly List<(Collider piece, Collider robot)> _ignoredPairs = new();
-        private readonly List<(Collider piece, Collider wrist)> _wristIgnoredPairs = new();
-        private float _wristClearUntil;
         private float TimeInPhase => Time.time - _phaseStart;
 
         // Per joint: the target it is moving to and the angle it must not sweep through on the way
@@ -262,7 +263,6 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             UpdateBranchSelection();
             CheckStationMode();
             if (_clearingCoral.Length > 0 && Time.time >= _clearUntil) SetCoralIgnoresRobot(Array.Empty<Collider>());
-            if (_wristIgnoredPairs.Count > 0 && Time.time >= _wristClearUntil) SetCoralIgnoresWrist(Array.Empty<Collider>());
 
             if (CurrentSetpoint != _phaseSetpoint)
             {
@@ -297,7 +297,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                         if (Mathf.Abs(side) > stationSideDeadband) _stationBehind = side < 0;
                     }
                     _reversed = coralMode && _stationMode && allowReverse && _stationBehind;
-                    wantCoral = empty && coralMode;
+                    wantCoral = empty && coralMode && Time.time >= _coralIntakeBlockedUntil;
                     wantAlgae = empty && !coralMode;
                     break;
                 case ReefscapeSetpoints.Place:
@@ -658,16 +658,13 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 var force = LastSetpoint == ReefscapeSetpoints.L1 ? l1ReleaseForce : coralReleaseForce;
                 if (_reversed) force.z = -force.z; // scoring out the back pushes the other way
                 if (!_coralController.ReleaseGamePieceWithForce(force)) return false;
+                _coralIntakeBlockedUntil = Time.time + scoreTime; // so a quick switch to intake can't regrab it
                 // While held, the piece's colliders are parented to the robot; Release moves them back onto the piece
                 var coral = piece ? piece.GetComponentsInChildren<Collider>() : Array.Empty<Collider>();
-                if (LastSetpoint == ReefscapeSetpoints.L1)
-                {
-                    SetCoralIgnoresWrist(coral);
-                    _wristClearUntil = Time.time + l1WristClearTime;
-                }
-                if (!coralIgnoresRobotAfterScore) return true;
+                bool l1 = LastSetpoint == ReefscapeSetpoints.L1;
+                if (!l1 && !coralIgnoresRobotAfterScore) return true;
                 SetCoralIgnoresRobot(coral);
-                _clearUntil = Time.time + coralClearTime;
+                _clearUntil = Time.time + (l1 ? l1ClearTime : coralClearTime);
             }
             return true;
         }
@@ -713,21 +710,6 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             {
                 Physics.IgnoreCollision(p, r, true);
                 _ignoredPairs.Add((p, r));
-            }
-        }
-
-        /// An L1 coral drops out past the wrist, so it ignores just the wrist's colliders for l1WristClearTime.
-        /// Passing an empty array restores the last set.
-        private void SetCoralIgnoresWrist(Collider[] coral)
-        {
-            foreach (var (c, w) in _wristIgnoredPairs)
-                if (c && w) Physics.IgnoreCollision(c, w, false);
-            _wristIgnoredPairs.Clear();
-            foreach (var w in wrist.GetComponentsInChildren<Collider>())
-            foreach (var c in coral)
-            {
-                Physics.IgnoreCollision(c, w, true);
-                _wristIgnoredPairs.Add((c, w));
             }
         }
 
