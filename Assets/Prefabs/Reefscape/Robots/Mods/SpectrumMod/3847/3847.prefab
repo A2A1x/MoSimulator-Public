@@ -81494,6 +81494,7 @@ MonoBehaviour:
   coralReleaseDelay: 0.15
   l4ReleaseDelay: 0.15
   scoreTime: 1.5
+  intakeLockoutTime: 0.35
   climberStow: 90
   climberDeploy: -20
   climberClimbed: 120
