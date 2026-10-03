@@ -81375,7 +81375,7 @@ MonoBehaviour:
     kP: 0.5
     kI: 0
     kD: 0.1
-    Max: 7
+    Max: 10.5
     Isaturation: 0
   climberPid:
     kP: 1
