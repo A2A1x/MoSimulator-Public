@@ -48922,11 +48922,11 @@ MonoBehaviour:
   hasGamePiece: 0
   requestIntake: 0
   pieceName: 
-  intakeSpeed: 180
+  intakeSpeed: 84
   intakeForce: 80
   usePlanarTolerancing: 0
   boxExtents: {x: 0, y: 0, z: 0}
-  maxDistance: 10
+  maxDistance: 6
   accuracy: 2
   lockXAxis: 0
   lockYAxis: 0
