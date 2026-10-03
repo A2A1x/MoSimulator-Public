@@ -81524,8 +81524,8 @@ MonoBehaviour:
     angularSpeed: 0
   logJoints: 1
   coralIgnoresRobotAfterScore: 1
-  coralClearTime: 0.6
-  l1ClearTime: 1.5
+  coralClearTime: 0.1
+  l1ClearTime: 0.1
   stowClearTime: 0.1
   coralReleaseForce: {x: 0, y: 0, z: 0}
   l1ReleaseForce: {x: 0, y: 2, z: 0}
