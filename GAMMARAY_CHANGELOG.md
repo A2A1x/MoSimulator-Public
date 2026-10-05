@@ -14,6 +14,7 @@
 
 ### Arm
 - Wrist 50% faster
+- Elevator sits higher for low and high reef algae intake
 - Wrist turns toward the picked branch during the drive up, not only once auto-align arrives
 
 ## v1.0.0 (2026-10-02)

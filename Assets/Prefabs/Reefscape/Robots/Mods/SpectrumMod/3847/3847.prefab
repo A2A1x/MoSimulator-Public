@@ -81422,9 +81422,9 @@ MonoBehaviour:
     elbow: 64
     twist: 0
   l1Pose:
-    elevator: 0.3
+    elevator: 0.7
     shoulder: 16.9
-    elbow: -130.6
+    elbow: -120
     twist: 0
   l2Pose:
     elevator: 6.4
@@ -81457,12 +81457,12 @@ MonoBehaviour:
     elbow: -104
     twist: 0
   lowAlgaePose:
-    elevator: 2.5
+    elevator: 4.5
     shoulder: 160
     elbow: -86
     twist: 179.9
   highAlgaePose:
-    elevator: 13.5
+    elevator: 15.5
     shoulder: 160
     elbow: -86
     twist: 179.9
