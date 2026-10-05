@@ -1,6 +1,21 @@
 # GammaRay (3847) Changelog
 
-## v2.0.0-beta (in testing)
+## v3.0.0-beta (in testing)
+
+### Intake
+- Intake roller is a physical, motor-driven roller that grips and pulls game pieces, not just a spinning model
+- Ground coral intake uses planar tolerancing and no longer pulls coral along its length
+- Coral being pulled in collides with the robot instead of passing through it, so it no longer phases through the end effector
+- Coral intake pulls slower and a bit softer, with the roller doing more of the work
+- Elevator sits higher for low and high reef algae intake
+
+### Arm
+- Wrist turns toward the branch the driver picked during the drive up to the reef, not only once auto-align arrives
+
+### Platforms
+- install-mod-mac.sh installs the macOS zip into MoSimulator's Mods folder
+
+## v2.0.0-beta (2026-10-03)
 
 ### Scoring
 - Coral briefly clears the robot after every score, improving scoring consistency on all levels
@@ -10,15 +25,10 @@
 
 ### Intake
 - Coral intake no longer grabs coral it shouldn't (slower pull, shorter reach)
-- Coral intake pulls slower but a bit harder, with the roller doing more of the work
-- Coral being pulled in collides with the robot instead of passing through it, so it no longer phases through the end effector
-- Ground coral intake uses planar tolerancing and no longer pulls coral along its length
-- Intake roller is a physical, motor-driven roller that grips and pulls game pieces, not just a spinning model
+- Coral intake pulls a bit harder
 
 ### Arm
 - Wrist 50% faster
-- Elevator sits higher for low and high reef algae intake
-- Wrist turns toward the picked branch during the drive up, not only once auto-align arrives
 
 ## v1.0.0 (2026-10-02)
 

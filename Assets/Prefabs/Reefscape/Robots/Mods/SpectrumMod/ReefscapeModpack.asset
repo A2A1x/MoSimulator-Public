@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ReefscapeModpack
   m_EditorClassIdentifier: 
   modpackName: SpectrumMod
-  modpackVersion: 2.0.0-beta
+  modpackVersion: 3.0.0-beta
   authorName: A2A1
   description: Spectrum 3847's Compeition Robot Gamma Ray
   robots:
