@@ -1,6 +1,6 @@
 # GammaRay (3847) Changelog
 
-## v2.0.0 (2026-10-05)
+## v2.0.0-beta (in testing)
 
 ### Scoring
 - Coral briefly clears the robot after every score, improving scoring consistency on all levels
