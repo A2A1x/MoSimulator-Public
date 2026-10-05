@@ -130,10 +130,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private float pincherOpenAngle = 70;
         [SerializeField] private float pincherSpeed = 360;
 
-        [Header("Intake Roller (visual; spins about its own pivot while intaking, reversed while scoring)")]
-        [SerializeField] private Transform intakeRoller;
-        [Tooltip("Spin axis in the roller's local space. Negate to reverse direction")]
-        [SerializeField] private Vector3 rollerAxis = Vector3.right;
+        [Header("Intake Roller (GenericRoller on the wrist's hinge; spins while intaking, reversed while scoring)")]
+        [SerializeField] private GenericRoller intakeRoller;
+        [Tooltip("Degrees/second about the roller's hinge axis. Negate to reverse direction")]
         [SerializeField] private float rollerSpeed = 1440;
         [Tooltip("Looping roller sound, played while the roller spins")]
         [SerializeField] private AudioSource rollerAudio;
@@ -380,7 +379,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             UpdatePincher(hasAlgae || (wantAlgae && algaeIntake.GamePiece));
             bool robotEnabled = BaseGameManager.Instance.RobotState != RobotState.Disabled;
             float rollerDir = !robotEnabled ? 0 : wantCoral || wantAlgae ? 1 : CurrentSetpoint == ReefscapeSetpoints.Place ? -1 : 0;
-            if (intakeRoller) intakeRoller.Rotate(rollerAxis, rollerDir * rollerSpeed * Time.deltaTime, Space.Self);
+            if (intakeRoller) intakeRoller.SetAngularVelocity(rollerDir * rollerSpeed);
             if (rollerAudio && rollerAudio.isPlaying != (rollerDir != 0))
             {
                 if (rollerDir != 0) rollerAudio.Play();
@@ -680,28 +679,21 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         }
 
         /// The intakes pull pieces in with forces, and until secured the piece still collides with the robot.
-        /// A coral that comes in tilted jams against the arm and gets flung, so it ignores the whole robot while
-        /// pulled (and for coralClearTime after, if the pull is abandoned). An algae jams against the claw and never
-        /// reaches the target, but ignoring the whole robot lets it sink into the wrist; so it only ignores the
-        /// robot colliders it would overlap sitting at the target, and everything else still pushes it out.
+        /// Coral collides normally the whole way in (the piece system ignores the robot itself once the coral is in
+        /// the intake's zone). An algae jams against the claw and never reaches the target, but ignoring the whole
+        /// robot lets it sink into the wrist; so it only ignores the robot colliders it would overlap sitting at
+        /// the target, and everything else still pushes it out.
         private void KeepPulledPieceOffRobot(ReefscapeGamePieceIntake intake, bool intaking)
         {
-            var pulling = intaking ? intake.GamePiece : null;
+            var pulling = intaking && intake == algaeIntake ? intake.GamePiece : null;
             if (pulling && !intake.securedGamePiece)
             {
                 if (pulling != _pullingPiece)
-                {
-                    var piece = pulling.GetComponentsInChildren<Collider>();
-                    if (intake == algaeIntake) IgnoreRobotAtTarget(piece, intake.transform.position);
-                    else SetCoralIgnoresRobot(piece);
-                }
+                    IgnoreRobotAtTarget(pulling.GetComponentsInChildren<Collider>(), intake.transform.position);
                 _pullingPiece = pulling;
-                _clearUntil = Time.time + coralClearTime;
                 return;
             }
             IgnoreRobotAtTarget(Array.Empty<Collider>(), Vector3.zero);
-            // Held now: the game piece controller keeps it off the robot, so don't undo its layer override
-            if (_pullingPiece && (_coralController.HasPiece() || _algaeController.HasPiece())) _clearingCoral = Array.Empty<Collider>();
             _pullingPiece = null;
         }
 

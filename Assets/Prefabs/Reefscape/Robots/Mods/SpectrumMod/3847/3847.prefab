@@ -48922,15 +48922,15 @@ MonoBehaviour:
   hasGamePiece: 0
   requestIntake: 0
   pieceName: 
-  intakeSpeed: 84
-  intakeForce: 100
-  usePlanarTolerancing: 0
-  boxExtents: {x: 0, y: 0, z: 0}
-  maxDistance: 6
-  accuracy: 2
+  intakeSpeed: 25
+  intakeForce: 90
+  usePlanarTolerancing: 1
+  boxExtents: {x: 4.7, y: 4.7, z: 11.8}
+  maxDistance: 1
+  accuracy: 0.5
   lockXAxis: 0
   lockYAxis: 0
-  lockZAxis: 0
+  lockZAxis: 1
   roationForce: 2
   maxRotationSpeed: 10
   useRotaion: 1
@@ -81504,8 +81504,7 @@ MonoBehaviour:
   pincherAxis: {x: 1, y: 0, z: 0}
   pincherOpenAngle: 70
   pincherSpeed: 360
-  intakeRoller: {fileID: 6606262664415299311}
-  rollerAxis: {x: 1, y: 0, z: 0}
+  intakeRoller: {fileID: 6650250018120639004}
   rollerSpeed: 1440
   rollerAudio: {fileID: 7391846205531847713}
   algaeStallAudio: {fileID: 7391846205531847714}
@@ -85755,6 +85754,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6606262664415299311}
+  - component: {fileID: 7528502664611422295}
+  - component: {fileID: 8277632210682722644}
+  - component: {fileID: 6650250018120639004}
   m_Layer: 6
   m_Name: Intake Roller
   m_TagString: Untagged
@@ -85784,6 +85786,84 @@ Transform:
   - {fileID: 1932084069131791794}
   m_Father: {fileID: 1008704992897954036}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!54 &7528502664611422295
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4322189212909145093}
+  serializedVersion: 4
+  m_Mass: 0.5
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!59 &8277632210682722644
+HingeJoint:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4322189212909145093}
+  serializedVersion: 3
+  m_ConnectedBody: {fileID: 766845541954275836}
+  m_ConnectedArticulationBody: {fileID: 0}
+  m_Anchor: {x: 0, y: 0, z: 0}
+  m_Axis: {x: 1, y: 0, z: 0}
+  m_AutoConfigureConnectedAnchor: 1
+  m_ConnectedAnchor: {x: 0, y: 0, z: 0}
+  m_UseSpring: 0
+  m_Spring:
+    spring: 0
+    damper: 0
+    targetPosition: 0
+  m_UseMotor: 1
+  m_Motor:
+    targetVelocity: 0
+    force: 3.4028233e+38
+    freeSpin: 0
+  m_UseLimits: 0
+  m_ExtendedLimits: 0
+  m_UseAcceleration: 0
+  m_Limits:
+    min: 0
+    max: 0
+    bounciness: 0
+    bounceMinVelocity: 0.2
+    contactDistance: 0
+  m_BreakForce: Infinity
+  m_BreakTorque: Infinity
+  m_EnableCollision: 0
+  m_EnablePreprocessing: 1
+  m_MassScale: 1
+  m_ConnectedMassScale: 1
+--- !u!114 &6650250018120639004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4322189212909145093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c70544bdb8675d748968fd7092a43259, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4323169592076766222
 GameObject:
   m_ObjectHideFlags: 0
@@ -119531,7 +119611,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5940643029264131170}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: e3a7aada2f3e61444825f76b87f50ea3, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0

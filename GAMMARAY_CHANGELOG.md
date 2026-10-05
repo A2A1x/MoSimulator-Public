@@ -10,7 +10,10 @@
 
 ### Intake
 - Coral intake no longer grabs coral it shouldn't (slower pull, shorter reach)
-- Coral intake pulls a bit harder
+- Coral intake pulls slower but a bit harder, with the roller doing more of the work
+- Coral being pulled in collides with the robot instead of passing through it, so it no longer phases through the end effector
+- Ground coral intake uses planar tolerancing and no longer pulls coral along its length
+- Intake roller is a physical, motor-driven roller that grips and pulls game pieces, not just a spinning model
 
 ### Arm
 - Wrist 50% faster
