@@ -81485,7 +81485,7 @@ MonoBehaviour:
   allowReverse: 1
   twistLeftBranch: 90
   twistRightBranch: 270
-  swapBranchSides: 0
+  swapBranchSides: 1
   wristFlipVia: 180
   alignToFaceCenter: 1
   twistStageDelay: 0.05

@@ -639,8 +639,10 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             var branch = (isLeftSide ? face.LeftNode : face.RightNode).transform;
             var faceCenter = (face.LeftNode.transform.position + face.RightNode.transform.position) / 2;
 
-            // "Right" as seen looking at the reef face from the robot's side, like Spectrum's rightScore
-            var lookRight = Vector3.Cross(Vector3.up, Vector3.ProjectOnPlane(faceCenter - transform.position, Vector3.up));
+            // "Right" as seen looking at the reef face from the robot's side, like Spectrum's rightScore. Looks toward the
+            // reef's center, not from the robot: auto-align parks the robot on faceCenter, which flipped the side once aligned
+            var lookAt = _ownReef ? _ownReef.transform.position - faceCenter : faceCenter - transform.position;
+            var lookRight = Vector3.Cross(Vector3.up, Vector3.ProjectOnPlane(lookAt, Vector3.up));
             _rightBranch = (Vector3.Dot(lookRight, branch.position - faceCenter) > 0) != swapBranchSides;
 
             if (autoAlign && alignToFaceCenter)
