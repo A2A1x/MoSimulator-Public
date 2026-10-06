@@ -7,6 +7,10 @@ All of the modding documentation is located on the website here: [Modding Docume
 ## SpectrumMod: GammaRay (3847)
 This fork adds **SpectrumMod**, a modpack with Spectrum 3847's 2025 robot, GammaRay, driven by the poses and scoring sequence from Spectrum's robot code. See [GAMMARAY_CHANGELOG.md](GAMMARAY_CHANGELOG.md) for what's in each version.
 
+[![GammaRay teaser](https://img.youtube.com/vi/1Y1DCv1BIts/hqdefault.jpg)](https://youtu.be/1Y1DCv1BIts)
+
+[Watch the teaser on YouTube](https://youtu.be/1Y1DCv1BIts)
+
 ### Install
 Download the zip for your OS from [Releases](https://github.com/A2A1x/MoSimulator-Public/releases), then install it with the script for your OS. Each one finds the newest SpectrumMod zip in your Downloads folder (or takes a zip you give it) and replaces any older version:
 
