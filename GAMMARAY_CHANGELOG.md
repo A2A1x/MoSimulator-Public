@@ -1,5 +1,12 @@
 # GammaRay (3847) Changelog
 
+## v4.0.0-beta (in testing)
+
+### Climb
+- Climber is stronger, so it reaches its climbed position and lifts the robot the same way every climb (it used to stall partway, at a different angle each time)
+- Climber swings out at a steady, capped speed, so it no longer clips through the cage
+- Reworked climber colliders
+
 ## v3.0.0-beta (in testing)
 
 ### Intake

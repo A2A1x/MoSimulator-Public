@@ -117,6 +117,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private float climberStow = 90;
         [SerializeField] private float climberDeploy = -20;
         [SerializeField] private float climberClimbed = 100;
+        [Tooltip("Fastest the climber's target moves (degrees/s), so climberPid.Max sets its strength against the " +
+                 "robot's weight without also speeding up the free swing")]
+        [SerializeField] private float climberMaxSpeed = 270;
 
         [Header("Intakes")]
         [SerializeField] private ReefscapeGamePieceIntake coralIntake;
@@ -146,6 +149,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [Header("Debug")]
         [Tooltip("Writes one CSV row per physics tick to <project>/Logs/GammaRayJoints.csv")]
         [SerializeField] private bool logJoints;
+        [Tooltip("Writes one CSV row per physics tick to <project>/Logs/GammaRayClimber.csv: the climber's PID terms, " +
+                 "joint torque and the robot's height and tilt, for tuning the climb")]
+        [SerializeField] private bool logClimber;
 
         [Header("Release")]
         [Tooltip("A scored coral ignores the robot's colliders for coralClearTime")]
@@ -173,6 +179,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private bool _reversed;      // scoring off the back: shoulder/elbow negated, twist turned 180 (as in Spectrum's code)
         private bool _branchTwist;   // twist comes from the chosen branch instead of the pose
         private float _climberTarget;
+        private float _climberCommand; // _climberTarget, rate limited to climberMaxSpeed
 
         // commanded targets in robot-code units (after reverse/branch), released joint by joint by the sequence
         private float _elevatorTarget, _shoulderTarget, _elbowTarget, _twistTarget;
@@ -218,7 +225,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             _pidStartTime = Time.time;
 
             _pose = stowPose;
-            _climberTarget = climberStow;
+            _climberTarget = _climberCommand = climberStow;
             (_elevatorTarget, _shoulderTarget, _elbowTarget, _twistTarget) =
                 (stowPose.elevator, stowPose.shoulder, stowPose.elbow, stowPose.twist);
             _phaseSetpoint = CurrentSetpoint;
@@ -392,6 +399,40 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 else algaeStallAudio.Stop();
             }
             if (logJoints) LogJoints();
+            if (logClimber) LogClimber();
+        }
+
+        private StreamWriter _climberLog;
+
+        private void LogClimber()
+        {
+            if (_climberLog == null)
+            {
+                var path = Path.Combine(Application.dataPath, "..", "Logs", "GammaRayClimber.csv");
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                _climberLog = new StreamWriter(path, false) { AutoFlush = true };
+                _climberLog.WriteLine("time,robotState,setpoint,target,angle,error,pTerm,dTerm,iTerm,integral,output,pidDt," +
+                                      "spinDegPerSec,jointTorque,jointForce,robotHeight,robotPitch,robotRoll,robotSpeed");
+            }
+
+            var inv = CultureInfo.InvariantCulture;
+            string F(float v, string fmt = "F3") => v.ToString(fmt, inv);
+            _loops.TryGetValue(climber, out var loop);
+            loop ??= new AngleLoop();
+            var cj = climber.GetComponent<ConfigurableJoint>();
+            var axis = climber.transform.TransformDirection(AxisVector(JointAxis.Z));
+            var rb = climber.GetRigidbody();
+            var parentRb = cj.connectedBody;
+            float spin = Vector3.Dot(rb.angularVelocity - (parentRb ? parentRb.angularVelocity : Vector3.zero), axis) * Mathf.Rad2Deg;
+            var body = GetComponent<Rigidbody>();
+            var e = transform.eulerAngles;
+            _climberLog.WriteLine(string.Join(",",
+                F(Time.time), BaseGameManager.Instance.RobotState, CurrentSetpoint,
+                F(Mathf.DeltaAngle(0, loop.sentLocal), "F2"), F(JointAngle(climber, JointAxis.Z), "F2"), F(loop.error, "F2"),
+                F(loop.pTerm), F(loop.dTerm), F(loop.iTerm), F(loop.integral), F(loop.outputValue), F(loop.dt),
+                F(spin, "F1"), F(Vector3.Dot(cj.currentTorque, axis)), F(cj.currentForce.magnitude),
+                F(transform.position.y), F(Mathf.DeltaAngle(0, e.x), "F2"), F(Mathf.DeltaAngle(0, e.z), "F2"),
+                F(body ? body.velocity.magnitude : 0)));
         }
 
         private void LogJoints()
@@ -441,7 +482,11 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             algaePincher.localRotation = _pincherHomeRot * Quaternion.AngleAxis(_pincherAngle, pincherAxis);
         }
 
-        private void OnDestroy() => _log?.Dispose();
+        private void OnDestroy()
+        {
+            _log?.Dispose();
+            _climberLog?.Dispose();
+        }
 
         /// Same as JackInTheBot (2910): each RobotSpecial press flips between ground and station coral intake.
         private void CheckStationMode()
@@ -520,7 +565,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 ? ToUnity((_reversed ? wristFlipVia : wristFlipVia + 180), twistHome, invertTwist)
                 : (float?)null;
             Drive(wrist, JointAxis.Y, wristPid, ToUnity(_twistTarget, twistHome, invertTwist), blockedOverride: wristBlocked);
-            Drive(climber, JointAxis.Z, climberPid, ToUnity(_climberTarget, climberHome, invertClimber));
+            _climberCommand = Mathf.MoveTowards(_climberCommand, _climberTarget, climberMaxSpeed * Time.deltaTime);
+            Drive(climber, JointAxis.Z, climberPid, ToUnity(_climberCommand, climberHome, invertClimber));
         }
 
         /// Robot-code degrees to turn the twist from the robot's front to the nearest point on the barge,
@@ -557,6 +603,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             public float target = float.NaN, blocked = float.NaN, integral, lastAngle;
             public bool started;
             public float sentLocal, outputValue;
+            public float error, pTerm, dTerm, iTerm, dt; // last tick's PID terms, for the climber log
         }
 
         private readonly Dictionary<GenericJoint, AngleLoop> _loops = new();
@@ -604,6 +651,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             loop.lastAngle = current;
             loop.started = true;
             float pd = Mathf.Clamp(pid.kP * error - pid.kD * rate, -pid.Max, pid.Max);
+            (loop.error, loop.pTerm, loop.dTerm, loop.iTerm, loop.dt) = (error, pid.kP * error, -pid.kD * rate, pid.kI * loop.integral, dt);
             float output = Mathf.Clamp(pd + pid.kI * loop.integral, -pid.Max - pid.Isaturation, pid.Max + pid.Isaturation);
 
             var axisVector = AxisVector(axis);
