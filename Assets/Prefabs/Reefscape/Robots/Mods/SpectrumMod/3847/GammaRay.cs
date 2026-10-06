@@ -180,6 +180,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private bool _reversed;      // scoring off the back: shoulder/elbow negated, twist turned 180 (as in Spectrum's code)
         private bool _branchTwist;   // twist comes from the chosen branch instead of the pose
         private float _climberTarget;
+        private float? _disabledElevatorHeight; // set while disabled, see ApplyPose
         private float _climberCommand; // _climberTarget, rate limited to climberMaxSpeed
 
         // commanded targets in robot-code units (after reverse/branch), released joint by joint by the sequence
@@ -524,7 +525,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 (_shoulderTarget, _elbowTarget, _twistTarget) = (s, e, t);
             }
 
-            elevator.SetTarget(Mathf.Clamp(_elevatorTarget * elevatorInchesPerRotation, 0, maxElevatorTravel));
+            // The elevator's GenericJoint ignores disabled mode (so it doesn't sag on the base game's weak brake), which
+            // also let it keep chasing targets while disabled; it holds the height it had when the robot was disabled
+            if (BaseGameManager.Instance.RobotState == RobotState.Disabled)
+                _disabledElevatorHeight ??= elevator.GetElevatorHeight();
+            else
+                _disabledElevatorHeight = null;
+            elevator.SetTarget(_disabledElevatorHeight ??
+                               Mathf.Clamp(_elevatorTarget * elevatorInchesPerRotation, 0, maxElevatorTravel));
             float shoulderAngle = ToUnity(_shoulderTarget, shoulderHome, invertShoulder);
             // An absolute elbow holds its angle against the robot, so it compensates for where the shoulder actually is
             float shoulderActual = JointAngle(shoulder, JointAxis.X);

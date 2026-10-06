@@ -5,6 +5,7 @@
 ### Fixes
 - Arm poses tuned for this mod now take effect in the game, not only in the editor: L1, L4 and low/high reef algae were running on older defaults since v1.0.0
 - Reef algae elevator heights raised
+- Elevator holds still while the robot is disabled (it could keep moving, e.g. dropping to stow after a score)
 
 ### Intake
 - Ground coral intake reaches further and pulls harder
