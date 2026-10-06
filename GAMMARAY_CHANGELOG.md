@@ -2,6 +2,13 @@
 
 ## v4.0.0-beta (in testing)
 
+### Fixes
+- Arm poses tuned for this mod now take effect in the game, not only in the editor: L1, L4 and low/high reef algae were running on older defaults since v1.0.0
+- Reef algae elevator heights raised
+
+### Intake
+- Ground coral intake reaches further and pulls harder
+
 ### Climb
 - Climber is stronger, so it reaches its climbed position and lifts the robot the same way every climb (it used to stall partway, at a different angle each time)
 - Climber swings out at a steady, capped speed, so it no longer clips through the cage

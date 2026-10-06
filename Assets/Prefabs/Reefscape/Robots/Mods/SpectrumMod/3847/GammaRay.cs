@@ -61,24 +61,27 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private bool invertShoulder, invertElbow, invertTwist, invertClimber;
 
         [Header("Poses (Spectrum 'ex' values; reef poses are mirrored automatically when scoring off the back)")]
-        [SerializeField] private SpectrumPose stowPose = new SpectrumPose(0, 0, 180, 90);
+        // x = elevator motor rotations, y = shoulder, z = elbow, w = twist (degrees, robot code). Vector4, not a custom
+        // class: the built game can't load serialized fields whose type comes from the mod's own DLL, so those fell
+        // back to their code defaults there. Twist is ignored for L2-L4, which use the branch twist.
+        [SerializeField] private Vector4 stowPose = new Vector4(0, 0, 180, 90);
         [Tooltip("Stow while holding algae: wrist turned 90 from the normal stow")]
-        [SerializeField] private SpectrumPose algaeStowPose = new SpectrumPose(0, 0, 180, 179.9f);
-        [SerializeField] private SpectrumPose coralIntakePose = new SpectrumPose(0, -9.2f, -158.7f, 0);
-        [SerializeField] private SpectrumPose groundCoralIntakePose = new SpectrumPose(0, 4, 76, 179.9f);
-        [SerializeField] private SpectrumPose algaeIntakePose = new SpectrumPose(4.5f, 0, 64, 0);
-        [SerializeField] private SpectrumPose l1Pose = new SpectrumPose(0.3f, 16.9f, -130.6f, 0);
-        [SerializeField] private SpectrumPose l2Pose = new SpectrumPose(6.4f, -19.8f, -127.1f, 0);
-        [SerializeField] private SpectrumPose l2ScorePose = new SpectrumPose(4.1f, 25, -116, 0);
-        [SerializeField] private SpectrumPose l3Pose = new SpectrumPose(16.9f, -19.8f, -127.1f, 0);
-        [SerializeField] private SpectrumPose l3ScorePose = new SpectrumPose(14.6f, 30, -106.4f, 0);
-        [SerializeField] private SpectrumPose l4Pose = new SpectrumPose(21.1f * 0.999f, 193.5f, -131.6f, 0);
-        [SerializeField] private SpectrumPose l4ScorePose = new SpectrumPose(21.1f * 0.999f - 3, 145.8f, -104, 0);
-        [SerializeField] private SpectrumPose lowAlgaePose = new SpectrumPose(2.5f, 160, -86, 179.9f);
-        [SerializeField] private SpectrumPose highAlgaePose = new SpectrumPose(13.5f, 160, -86, 179.9f);
-        [SerializeField] private SpectrumPose processorPose = new SpectrumPose(0, -143.877f, 64.072f, 0);
-        [SerializeField] private SpectrumPose bargePose = new SpectrumPose(21.1f * 0.999f, 180, -180, 179.9f);
-        [SerializeField] private SpectrumPose climbPose = new SpectrumPose(0, 45, 180, 179.9f);
+        [SerializeField] private Vector4 algaeStowPose = new Vector4(0, 0, 180, 179.9f);
+        [SerializeField] private Vector4 coralIntakePose = new Vector4(0, -9.2f, -158.7f, 0);
+        [SerializeField] private Vector4 groundCoralIntakePose = new Vector4(0, 4, 76, 179.9f);
+        [SerializeField] private Vector4 algaeIntakePose = new Vector4(4.5f, 0, 64, 0);
+        [SerializeField] private Vector4 l1Pose = new Vector4(0.3f, 16.9f, -130.6f, 0);
+        [SerializeField] private Vector4 l2Pose = new Vector4(6.4f, -19.8f, -127.1f, 0);
+        [SerializeField] private Vector4 l2ScorePose = new Vector4(4.1f, 25, -116, 0);
+        [SerializeField] private Vector4 l3Pose = new Vector4(16.9f, -19.8f, -127.1f, 0);
+        [SerializeField] private Vector4 l3ScorePose = new Vector4(14.6f, 30, -106.4f, 0);
+        [SerializeField] private Vector4 l4Pose = new Vector4(21.1f * 0.999f, 193.5f, -131.6f, 0);
+        [SerializeField] private Vector4 l4ScorePose = new Vector4(21.1f * 0.999f - 3, 145.8f, -104, 0);
+        [SerializeField] private Vector4 lowAlgaePose = new Vector4(2.5f, 160, -86, 179.9f);
+        [SerializeField] private Vector4 highAlgaePose = new Vector4(13.5f, 160, -86, 179.9f);
+        [SerializeField] private Vector4 processorPose = new Vector4(0, -143.877f, 64.072f, 0);
+        [SerializeField] private Vector4 bargePose = new Vector4(21.1f * 0.999f, 180, -180, 179.9f);
+        [SerializeField] private Vector4 climbPose = new Vector4(0, 45, 180, 179.9f);
 
         [Tooltip("Barge and its score: the wrist turrets so the claw faces the barge (bargePose's twist faces the robot's front)")]
         [SerializeField] private bool bargeTwistTracksBarge = true;
@@ -225,7 +228,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             _pose = stowPose;
             _climberTarget = _climberCommand = climberStow;
             (_elevatorTarget, _shoulderTarget, _elbowTarget, _twistTarget) =
-                (stowPose.elevator, stowPose.shoulder, stowPose.elbow, stowPose.twist);
+                (stowPose.x, stowPose.y, stowPose.z, stowPose.w);
             _phaseSetpoint = CurrentSetpoint;
             _phaseStart = Time.time;
             _robotMask = LayerMask.GetMask("Robot");
@@ -751,22 +754,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         }
     }
 
-    [Serializable]
+    /// One arm pose in robot-code units; the inspector stores it as a Vector4 (see the Poses header).
     public class SpectrumPose
     {
-        [Tooltip("Elevator motor rotations (robot code)")] public float elevator;
-        [Tooltip("Shoulder degrees (robot code)")] public float shoulder;
-        [Tooltip("Elbow degrees (robot code)")] public float elbow;
-        [Tooltip("Twist degrees (robot code); ignored for L2-L4, which use the branch twist")] public float twist;
+        public readonly float elevator, shoulder, elbow, twist;
 
-        public SpectrumPose() { }
+        public SpectrumPose(float elevator, float shoulder, float elbow, float twist) =>
+            (this.elevator, this.shoulder, this.elbow, this.twist) = (elevator, shoulder, elbow, twist);
 
-        public SpectrumPose(float elevator, float shoulder, float elbow, float twist)
-        {
-            this.elevator = elevator;
-            this.shoulder = shoulder;
-            this.elbow = elbow;
-            this.twist = twist;
-        }
+        public static implicit operator SpectrumPose(Vector4 v) => new SpectrumPose(v.x, v.y, v.z, v.w);
     }
 }

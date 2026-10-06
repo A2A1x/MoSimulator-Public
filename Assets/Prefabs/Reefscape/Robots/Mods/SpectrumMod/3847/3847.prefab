@@ -49008,7 +49008,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.12, y: 0.12, z: 0.3}
+  m_Size: {x: 0.18, y: 0.18, z: 0.3}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &1704005579095372211
 MonoBehaviour:
@@ -49029,9 +49029,9 @@ MonoBehaviour:
   requestIntake: 0
   pieceName: 
   intakeSpeed: 25
-  intakeForce: 90
+  intakeForce: 120
   usePlanarTolerancing: 1
-  boxExtents: {x: 4.7, y: 4.7, z: 11.8}
+  boxExtents: {x: 7.1, y: 7.1, z: 11.8}
   maxDistance: 1
   accuracy: 0.5
   lockXAxis: 0
@@ -81502,91 +81502,23 @@ MonoBehaviour:
   invertElbow: 0
   invertTwist: 0
   invertClimber: 0
-  stowPose:
-    elevator: 0
-    shoulder: 0
-    elbow: 180
-    twist: 90
-  algaeStowPose:
-    elevator: 0
-    shoulder: 0
-    elbow: 180
-    twist: 179.9
-  coralIntakePose:
-    elevator: 0
-    shoulder: -9.2
-    elbow: -158.7
-    twist: 0
-  groundCoralIntakePose:
-    elevator: 0
-    shoulder: 4
-    elbow: 76
-    twist: 179.9
-  algaeIntakePose:
-    elevator: 4.5
-    shoulder: 0
-    elbow: 64
-    twist: 0
-  l1Pose:
-    elevator: 0.7
-    shoulder: 16.9
-    elbow: -120
-    twist: 0
-  l2Pose:
-    elevator: 6.4
-    shoulder: -19.8
-    elbow: -127.1
-    twist: 0
-  l2ScorePose:
-    elevator: 4.1
-    shoulder: 25
-    elbow: -116
-    twist: 0
-  l3Pose:
-    elevator: 16.9
-    shoulder: -19.8
-    elbow: -127.1
-    twist: 0
-  l3ScorePose:
-    elevator: 14.6
-    shoulder: 30
-    elbow: -106.4
-    twist: 0
-  l4Pose:
-    elevator: 21.0789
-    shoulder: 193.4
-    elbow: -121.9
-    twist: 0
-  l4ScorePose:
-    elevator: 18.0789
-    shoulder: 145.8
-    elbow: -104
-    twist: 0
-  lowAlgaePose:
-    elevator: 4.5
-    shoulder: 160
-    elbow: -86
-    twist: 179.9
-  highAlgaePose:
-    elevator: 15.5
-    shoulder: 160
-    elbow: -86
-    twist: 179.9
-  processorPose:
-    elevator: 0
-    shoulder: -143.877
-    elbow: 64.072
-    twist: 0
-  bargePose:
-    elevator: 21.0789
-    shoulder: 180
-    elbow: -180
-    twist: 179.9
-  climbPose:
-    elevator: 0
-    shoulder: 45
-    elbow: 180
-    twist: 179.9
+  stowPose: {x: 0, y: 0, z: 180, w: 90}
+  algaeStowPose: {x: 0, y: 0, z: 180, w: 179.9}
+  coralIntakePose: {x: 0, y: -9.2, z: -158.7, w: 0}
+  groundCoralIntakePose: {x: 0, y: 4, z: 76, w: 179.9}
+  algaeIntakePose: {x: 4.5, y: 0, z: 64, w: 0}
+  l1Pose: {x: 0.7, y: 16.9, z: -120, w: 0}
+  l2Pose: {x: 6.4, y: -19.8, z: -127.1, w: 0}
+  l2ScorePose: {x: 4.1, y: 25, z: -116, w: 0}
+  l3Pose: {x: 16.9, y: -19.8, z: -127.1, w: 0}
+  l3ScorePose: {x: 14.6, y: 30, z: -106.4, w: 0}
+  l4Pose: {x: 21.0789, y: 193.4, z: -121.9, w: 0}
+  l4ScorePose: {x: 18.0789, y: 145.8, z: -104, w: 0}
+  lowAlgaePose: {x: 6.5, y: 160, z: -86, w: 179.9}
+  highAlgaePose: {x: 17.5, y: 160, z: -86, w: 179.9}
+  processorPose: {x: 0, y: -143.877, z: 64.072, w: 0}
+  bargePose: {x: 21.0789, y: 180, z: -180, w: 179.9}
+  climbPose: {x: 0, y: 45, z: 180, w: 179.9}
   bargeTwistTracksBarge: 1
   allowReverse: 1
   twistLeftBranch: 90
