@@ -7,7 +7,7 @@ All of the modding documentation is located on the website here: [Modding Docume
 ## SpectrumMod: GammaRay (3847)
 This fork adds **SpectrumMod**, a modpack with Spectrum 3847's 2025 robot, GammaRay, driven by the poses and scoring sequence from Spectrum's robot code. See [GAMMARAY_CHANGELOG.md](GAMMARAY_CHANGELOG.md) for what's in each version.
 
-[![GammaRay teaser](https://img.youtube.com/vi/1Y1DCv1BIts/hqdefault.jpg)](https://youtu.be/1Y1DCv1BIts)
+[![GammaRay teaser](TeaserVideo/Thumbnail.png)](https://youtu.be/1Y1DCv1BIts)
 
 [Watch the teaser on YouTube](https://youtu.be/1Y1DCv1BIts)
 
