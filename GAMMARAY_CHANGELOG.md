@@ -6,6 +6,7 @@
 - Arm poses tuned for this mod now take effect in the game, not only in the editor: L1, L4 and low/high reef algae were running on older defaults since v1.0.0
 - Reef algae elevator heights raised
 - Elevator holds still while the robot is disabled (it could keep moving, e.g. dropping to stow after a score)
+- At the other alliance's reef (e.g. stealing algae) the arm picks the side facing that reef, and auto-align picks the right branch; both used to be judged against your own reef and came out backwards
 
 ### Intake
 - Ground coral intake reaches further and pulls harder

@@ -203,7 +203,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private AlignNode[] _reefFaces;
         private CoralStation[] _stations;
         private BoxCollider[] _barges;
-        private GameObject _ownReef;
+        private GameObject[] _reefs;
         private bool _stationBehind;
         private bool _stationMode;   // coral intake: false = ground (default), true = human player station; RobotSpecial toggles, as on 2910
         private bool _robotSpecialPressed;
@@ -215,6 +215,26 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private bool _rightBranch = true;
         /// Spectrum's rightScore: the right branch (as seen from the robot) was picked. _rightBranch has swapBranchSides baked in for the twist
         public bool RightBranch => _rightBranch != swapBranchSides;
+
+        protected override void Update()
+        {
+            base.Update();
+            // The base latches FacingReef on these presses against our own alliance's reef, which is backwards at the
+            // other reef (stealing algae); redo it against whichever reef is nearest
+            if (BaseGameManager.Instance.RobotState != RobotState.Disabled &&
+                (L2Action.triggered || L3Action.triggered || L4Action.triggered ||
+                 AutoAlignLeftAction.triggered || AutoAlignRightAction.triggered))
+                CheckFacingNearestReef();
+        }
+
+        private GameObject NearestReef(Vector3 from) =>
+            _reefs.OrderBy(r => (r.transform.position - from).sqrMagnitude).FirstOrDefault();
+
+        private void CheckFacingNearestReef()
+        {
+            var reef = NearestReef(transform.position);
+            if (reef) FacingReef = Vector3.Dot(transform.forward, reef.transform.position - transform.position) > 0;
+        }
 
         protected override void Start()
         {
@@ -239,7 +259,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 .Where(node => node != null)
                 .ToArray();
             _stations = FindObjectsByType<CoralStation>(FindObjectsSortMode.None);
-            _ownReef = GameObject.Find(Alliance == Alliance.Blue ? "BlueReef" : "RedReef");
+            _reefs = new[] { GameObject.Find("BlueReef"), GameObject.Find("RedReef") }.Where(r => r).ToArray();
             _barges = FindObjectsByType<BargeScorer>(FindObjectsSortMode.None)
                 .Select(b => b.GetComponent<BoxCollider>()).Where(c => c).ToArray();
             if (autoAlign) _baseAlignOffset = autoAlign.offset;
@@ -283,9 +303,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 _phaseSetpoint = CurrentSetpoint;
                 _phaseStart = Time.time;
                 _released = false;
-                // The base only updates FacingReef on L2-L4; same check as its (private) CheckFacingReef
-                if (CurrentSetpoint == ReefscapeSetpoints.L1 && _ownReef)
-                    FacingReef = Vector3.Dot(transform.forward, _ownReef.transform.position - transform.position) > 0;
+                // The base only updates FacingReef on L2-L4
+                if (CurrentSetpoint == ReefscapeSetpoints.L1) CheckFacingNearestReef();
             }
 
             bool hasCoral = _coralController.HasPiece();
@@ -675,7 +694,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
             // "Right" as seen looking at the reef face from the robot's side, like Spectrum's rightScore. Looks toward the
             // reef's center, not from the robot: auto-align parks the robot on faceCenter, which flipped the side once aligned
-            var lookAt = _ownReef ? _ownReef.transform.position - faceCenter : faceCenter - transform.position;
+            var reef = NearestReef(faceCenter);
+            var lookAt = reef ? reef.transform.position - faceCenter : faceCenter - transform.position;
             var lookRight = Vector3.Cross(Vector3.up, Vector3.ProjectOnPlane(lookAt, Vector3.up));
             _rightBranch = (Vector3.Dot(lookRight, branch.position - faceCenter) > 0) != swapBranchSides;
 
