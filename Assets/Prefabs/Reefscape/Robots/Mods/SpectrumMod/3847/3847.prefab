@@ -81628,8 +81628,7 @@ MonoBehaviour:
     stateTarget: {fileID: 4089972413160897151}
     smoothHandoff: 0
     angularSpeed: 0
-  logJoints: 1
-  logClimber: 1
+  logJoints: 0
   coralIgnoresRobotAfterScore: 1
   coralClearTime: 0.1
   l1ClearTime: 0.1

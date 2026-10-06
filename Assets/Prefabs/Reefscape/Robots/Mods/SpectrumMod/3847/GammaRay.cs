@@ -147,11 +147,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private GamePieceState algaeStowState;
 
         [Header("Debug")]
-        [Tooltip("Writes one CSV row per physics tick to <project>/Logs/GammaRayJoints.csv")]
+        [Tooltip("Writes one CSV row per physics tick to <project>/Logs/GammaRayJoints.csv: each joint's target, angle, " +
+                 "PID terms and load, and the robot's height and tilt")]
         [SerializeField] private bool logJoints;
-        [Tooltip("Writes one CSV row per physics tick to <project>/Logs/GammaRayClimber.csv: the climber's PID terms, " +
-                 "joint torque and the robot's height and tilt, for tuning the climb")]
-        [SerializeField] private bool logClimber;
 
         [Header("Release")]
         [Tooltip("A scored coral ignores the robot's colliders for coralClearTime")]
@@ -399,40 +397,6 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 else algaeStallAudio.Stop();
             }
             if (logJoints) LogJoints();
-            if (logClimber) LogClimber();
-        }
-
-        private StreamWriter _climberLog;
-
-        private void LogClimber()
-        {
-            if (_climberLog == null)
-            {
-                var path = Path.Combine(Application.dataPath, "..", "Logs", "GammaRayClimber.csv");
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
-                _climberLog = new StreamWriter(path, false) { AutoFlush = true };
-                _climberLog.WriteLine("time,robotState,setpoint,target,angle,error,pTerm,dTerm,iTerm,integral,output,pidDt," +
-                                      "spinDegPerSec,jointTorque,jointForce,robotHeight,robotPitch,robotRoll,robotSpeed");
-            }
-
-            var inv = CultureInfo.InvariantCulture;
-            string F(float v, string fmt = "F3") => v.ToString(fmt, inv);
-            _loops.TryGetValue(climber, out var loop);
-            loop ??= new AngleLoop();
-            var cj = climber.GetComponent<ConfigurableJoint>();
-            var axis = climber.transform.TransformDirection(AxisVector(JointAxis.Z));
-            var rb = climber.GetRigidbody();
-            var parentRb = cj.connectedBody;
-            float spin = Vector3.Dot(rb.angularVelocity - (parentRb ? parentRb.angularVelocity : Vector3.zero), axis) * Mathf.Rad2Deg;
-            var body = GetComponent<Rigidbody>();
-            var e = transform.eulerAngles;
-            _climberLog.WriteLine(string.Join(",",
-                F(Time.time), BaseGameManager.Instance.RobotState, CurrentSetpoint,
-                F(Mathf.DeltaAngle(0, loop.sentLocal), "F2"), F(JointAngle(climber, JointAxis.Z), "F2"), F(loop.error, "F2"),
-                F(loop.pTerm), F(loop.dTerm), F(loop.iTerm), F(loop.integral), F(loop.outputValue), F(loop.dt),
-                F(spin, "F1"), F(Vector3.Dot(cj.currentTorque, axis)), F(cj.currentForce.magnitude),
-                F(transform.position.y), F(Mathf.DeltaAngle(0, e.x), "F2"), F(Mathf.DeltaAngle(0, e.z), "F2"),
-                F(body ? body.velocity.magnitude : 0)));
         }
 
         private void LogJoints()
@@ -447,12 +411,23 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 var path = Path.Combine(Application.dataPath, "..", "Logs", "GammaRayJoints.csv");
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
                 _log = new StreamWriter(path, false) { AutoFlush = true };
-                _log.WriteLine("time,setpoint,lastSetpoint," + string.Join(",", joints.Select(j =>
-                    $"{j.name}_target,{j.name}_angle,{j.name}_blocked,{j.name}_spinDegPerSec,{j.name}_pidOut")));
+                _log.WriteLine("time,robotState,setpoint,lastSetpoint,robotHeight,robotPitch,robotRoll,robotSpeed,pidDt," +
+                               string.Join(",", joints.Select(j =>
+                                   $"{j.name}_target,{j.name}_angle,{j.name}_blocked,{j.name}_spinDegPerSec,{j.name}_pidOut," +
+                                   $"{j.name}_error,{j.name}_pTerm,{j.name}_dTerm,{j.name}_iTerm,{j.name}_torque,{j.name}_force")));
             }
 
             var inv = CultureInfo.InvariantCulture;
-            var cols = new List<string> { Time.time.ToString("F3", inv), CurrentSetpoint.ToString(), LastSetpoint.ToString() };
+            var body = GetComponent<Rigidbody>();
+            var e = transform.eulerAngles;
+            _loops.TryGetValue(climber, out var anyLoop); // dt is shared by every joint
+            var cols = new List<string>
+            {
+                Time.time.ToString("F3", inv), BaseGameManager.Instance.RobotState.ToString(), CurrentSetpoint.ToString(),
+                LastSetpoint.ToString(), transform.position.y.ToString("F3", inv), Mathf.DeltaAngle(0, e.x).ToString("F2", inv),
+                Mathf.DeltaAngle(0, e.z).ToString("F2", inv), (body ? body.velocity.magnitude : 0).ToString("F3", inv),
+                (anyLoop?.dt ?? 0).ToString("F3", inv),
+            };
             foreach (var (_, joint, axis) in joints)
             {
                 var localAxis = AxisVector(axis);
@@ -463,13 +438,18 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 // spin about the joint's own axis relative to its parent, deg/s
                 var parentRb = cj.connectedBody;
                 var relSpin = rb.angularVelocity - (parentRb ? parentRb.angularVelocity : Vector3.zero);
-                float spin = Vector3.Dot(relSpin, joint.transform.TransformDirection(localAxis)) * Mathf.Rad2Deg;
+                var worldAxis = joint.transform.TransformDirection(localAxis);
+                float spin = Vector3.Dot(relSpin, worldAxis) * Mathf.Rad2Deg;
                 float cmdSpin = Vector3.Dot(cj.targetAngularVelocity, localAxis); // raw PID output, as GenericJoint writes it
                 cols.Add(Mathf.DeltaAngle(0, loop?.sentLocal ?? 0).ToString("F2", inv));
                 cols.Add(angle.ToString("F2", inv));
                 cols.Add((loop == null || float.IsNaN(loop.blocked) ? float.NaN : Mathf.DeltaAngle(0, loop.blocked)).ToString("F2", inv));
                 cols.Add(spin.ToString("F1", inv));
                 cols.Add(cmdSpin.ToString("F1", inv));
+                loop ??= new AngleLoop();
+                foreach (var v in new[] { loop.error, loop.pTerm, loop.dTerm, loop.iTerm,
+                             Vector3.Dot(cj.currentTorque, worldAxis), cj.currentForce.magnitude })
+                    cols.Add(v.ToString("F3", inv));
             }
             _log.WriteLine(string.Join(",", cols));
         }
@@ -482,11 +462,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             algaePincher.localRotation = _pincherHomeRot * Quaternion.AngleAxis(_pincherAngle, pincherAxis);
         }
 
-        private void OnDestroy()
-        {
-            _log?.Dispose();
-            _climberLog?.Dispose();
-        }
+        private void OnDestroy() => _log?.Dispose();
 
         /// Same as JackInTheBot (2910): each RobotSpecial press flips between ground and station coral intake.
         private void CheckStationMode()
@@ -603,7 +579,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             public float target = float.NaN, blocked = float.NaN, integral, lastAngle;
             public bool started;
             public float sentLocal, outputValue;
-            public float error, pTerm, dTerm, iTerm, dt; // last tick's PID terms, for the climber log
+            public float error, pTerm, dTerm, iTerm, dt; // last tick's PID terms, for the joint log
         }
 
         private readonly Dictionary<GenericJoint, AngleLoop> _loops = new();
