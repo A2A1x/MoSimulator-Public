@@ -11,6 +11,10 @@
 ### Intake
 - Ground coral intake reaches further and pulls harder
 
+### Look
+- Model recolored, with a clear polycarbonate belly pan
+- Robot Signal Light glows orange: solid while disabled, blinking while enabled
+
 ### Climb
 - Climber is stronger, so it reaches its climbed position and lifts the robot the same way every climb (it used to stall partway, at a different angle each time)
 - Climber swings out at a steady, capped speed, so it no longer clips through the cage

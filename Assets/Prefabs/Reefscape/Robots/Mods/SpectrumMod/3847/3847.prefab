@@ -81715,6 +81715,7 @@ MonoBehaviour:
   reverse: 0
   netZoneDistance: 0.844
   netZoneTolerance: 0.3
+  rsl: {fileID: 4512959409361427116}
   rslSlot: 0
   rslColor: {r: 1, g: 0.45, b: 0, a: 1}
   rslIntensity: 4
