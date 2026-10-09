@@ -1,6 +1,6 @@
 # GammaRay (3847) Changelog
 
-## v4.0.0-beta (in testing)
+## v1.0.0 (2026-10-08)
 
 ### Fixes
 - Arm poses tuned for this mod now take effect in the game, not only in the editor: L1, L4 and low/high reef algae were running on older defaults since v1.0.0
@@ -53,7 +53,7 @@
 ### Arm
 - Wrist 50% faster
 
-## v1.0.0 (2026-10-02)
+## v1.0.0-beta (2026-10-02)
 
 First release.
 
