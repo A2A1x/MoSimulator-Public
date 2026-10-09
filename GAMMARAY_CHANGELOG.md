@@ -20,7 +20,10 @@
 - Climber swings out at a steady, capped speed, so it no longer clips through the cage
 - Reworked climber colliders
 
-## v3.0.0-beta (in testing)
+### Platforms
+- install-mod.sh (macOS and Linux) replaces install-mod-mac.sh, and install-mod.bat installs on Windows
+
+## v3.0.0-beta (2026-10-05)
 
 ### Intake
 - Intake roller is a physical, motor-driven roller that grips and pulls game pieces, not just a spinning model

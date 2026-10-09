@@ -30,6 +30,10 @@ Restart the game after installing. To install by hand, put the `SpectrumMod` fol
 - Auto-align left/right picks the branch; the wrist turns toward it
 - Ground coral intake by default; **Robot Special** toggles human player station intake
 - Algae from the ground, stack and low/high reef; barge and processor scoring
+- Works at either alliance's reef: front/back and left/right branch follow the reef you're at, so you can steal algae from the other side
+- Robot Signal Light: solid orange while disabled, blinking while enabled
+
+Tested on MoSimulator v25.3.1 (Windows).
 
 ### Building
 The mod lives in `Assets/Prefabs/Reefscape/Robots/Mods/SpectrumMod` (robot code: `3847/GammaRay.cs`). In Unity, **Tools > Build Mod (all platforms)** builds the Addressables for Windows, macOS and Linux, zips each as `SpectrumMod-v<version>-<OS>.zip` in the project root, and installs the Windows build into your local game. The version comes from `modpackVersion` in `ReefscapeModpack.asset`. To build one platform by hand, see [install-mod.ps1](install-mod.ps1) (a build tool; the install scripts above are for players).
