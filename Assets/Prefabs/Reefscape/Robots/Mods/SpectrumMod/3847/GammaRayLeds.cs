@@ -28,8 +28,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
         [Header("Robot Signal Light: solid while disabled, blinking while enabled")]
         [SerializeField] private Renderer rsl;
-        [Tooltip("Which of the RSL renderer's material slots is the lens; it gets its own glowing copy")]
-        [SerializeField] private int rslSlot = 1;
+        [Tooltip("Which of the RSL renderer's material slots is the lens; it gets its own glowing copy. The slot's material " +
+                 "must already have emission on (RSL.mat): builds only include shader variants that materials use")]
+        [SerializeField] private int rslSlot = 0;
         [SerializeField] private Color rslColor = new Color(1f, 0.45f, 0f);
         [SerializeField] private float rslIntensity = 4;
         [Tooltip("Seconds on, then the same off, while enabled")]
