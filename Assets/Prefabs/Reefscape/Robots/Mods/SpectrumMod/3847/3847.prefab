@@ -48815,7 +48815,8 @@ Transform:
   m_LocalPosition: {x: 0.0038, y: 0.106, z: 0.1678}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2716066366084810944}
   m_Father: {fileID: 1317509690213141977}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!65 &7591085897090456869
@@ -48837,8 +48838,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.18, y: 0.18, z: 0.3}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 0.1183659, y: 0.087658465, z: 0.49398854}
+  m_Center: {x: 0.0018522927, y: 0.0048781335, z: -0.00132294}
 --- !u!114 &1704005579095372211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48852,7 +48853,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   intakeCollider:
-  - {fileID: 7591085897090456869}
+  - {fileID: 7199996942319087595}
   gamePieces: {fileID: 0}
   hasGamePiece: 0
   requestIntake: 0
@@ -81361,6 +81362,7 @@ MonoBehaviour:
   climberStow: 90
   climberDeploy: -20
   climberClimbed: 120
+  climberMaxSpeed: 270
   coralIntake: {fileID: 1704005579095372211}
   algaeIntake: {fileID: 1494817448658629473}
   algaePincher: {fileID: 6310837988247967553}
@@ -186062,3 +186064,56 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 5535717314597774545}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2313159963662635834
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2716066366084810944}
+  - component: {fileID: 7199996942319087595}
+  m_Layer: 6
+  m_Name: CoralIntakeZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2716066366084810944
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2313159963662635834}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.05, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 154182073714014855}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &7199996942319087595
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2313159963662635834}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.09, y: 0.1, z: 0.494}
+  m_Center: {x: 0, y: 0, z: 0}
