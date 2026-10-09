@@ -1,6 +1,29 @@
 # GammaRay (3847) Changelog
 
-## v3.0.0-beta (in testing)
+## v1.0.0 (2026-10-08)
+
+### Fixes
+- Arm poses tuned for this mod now take effect in the game, not only in the editor: L1, L4 and low/high reef algae were running on older defaults since v1.0.0
+- Reef algae elevator heights raised
+- Elevator holds still while the robot is disabled (it could keep moving, e.g. dropping to stow after a score)
+- At the other alliance's reef (e.g. stealing algae) the arm picks the side facing that reef, and auto-align picks the right branch; both used to be judged against your own reef and came out backwards
+
+### Intake
+- Ground coral intake reaches further and pulls harder
+
+### Look
+- Model recolored, with a clear polycarbonate belly pan
+- Robot Signal Light glows orange: solid while disabled, blinking while enabled
+
+### Climb
+- Climber is stronger, so it reaches its climbed position and lifts the robot the same way every climb (it used to stall partway, at a different angle each time)
+- Climber swings out at a steady, capped speed, so it no longer clips through the cage
+- Reworked climber colliders
+
+### Platforms
+- install-mod.sh (macOS and Linux) replaces install-mod-mac.sh, and install-mod.bat installs on Windows
+
+## v3.0.0-beta (2026-10-05)
 
 ### Intake
 - Intake roller is a physical, motor-driven roller that grips and pulls game pieces, not just a spinning model
@@ -30,7 +53,7 @@
 ### Arm
 - Wrist 50% faster
 
-## v1.0.0 (2026-10-02)
+## v1.0.0-beta (2026-10-02)
 
 First release.
 

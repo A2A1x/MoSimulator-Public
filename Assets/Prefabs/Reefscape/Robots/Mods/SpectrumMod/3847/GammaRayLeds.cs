@@ -26,6 +26,16 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private float netZoneDistance = 0.844f;
         [SerializeField] private float netZoneTolerance = 0.3f;
 
+        [Header("Robot Signal Light: solid while disabled, blinking while enabled")]
+        [SerializeField] private Renderer rsl;
+        [Tooltip("Which of the RSL renderer's material slots is the lens; it gets its own glowing copy. The slot's material " +
+                 "must already have emission on (RSL.mat): builds only include shader variants that materials use")]
+        [SerializeField] private int rslSlot = 0;
+        [SerializeField] private Color rslColor = new Color(1f, 0.45f, 0f);
+        [SerializeField] private float rslIntensity = 4;
+        [Tooltip("Seconds on, then the same off, while enabled")]
+        [SerializeField] private float rslBlinkTime = 0.25f;
+
         // WPILib colors (SpectrumLEDs.purple, Color.kCoral, ...)
         private static readonly Color Purple = new Color32(130, 103, 185, 255);
         private static readonly Color Coral = new Color32(255, 127, 80, 255);
@@ -40,6 +50,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private Collider[] _barges;
         private GameState _lastGameState = GameState.End;
         private float _autoStart;
+        private Material _rslMat;
 
         private void Start()
         {
@@ -54,6 +65,15 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             _mat.SetFloat("_X", 0);
             _mat.SetFloat("_Y", 0);
             foreach (var strip in strips) strip.sharedMaterial = _mat;
+
+            if (rsl && rslSlot < rsl.sharedMaterials.Length)
+            {
+                var mats = rsl.materials; // instances, so other parts sharing the material don't light up
+                _rslMat = mats[rslSlot];
+                _rslMat.SetColor("_BaseColor", rslColor);
+                _rslMat.EnableKeyword("_EMISSION");
+                rsl.materials = mats;
+            }
 
             _barges = FindObjectsByType<BargeScorer>(FindObjectsSortMode.None)
                 .Select(b => b.GetComponent<Collider>()).Where(c => c).ToArray();
@@ -77,6 +97,12 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             _tex.SetPixels(_px);
             _tex.Apply(false);
             _mat.SetFloat("_intensity", intensity);
+
+            if (_rslMat)
+            {
+                bool lit = gm.RobotState == RobotState.Disabled || Time.time % (2 * rslBlinkTime) < rslBlinkTime;
+                _rslMat.SetColor("_EmissionColor", lit ? rslColor * rslIntensity : Color.black);
+            }
         }
 
         private bool InNetZone()

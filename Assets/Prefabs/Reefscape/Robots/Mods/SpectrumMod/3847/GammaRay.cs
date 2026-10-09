@@ -61,24 +61,27 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private bool invertShoulder, invertElbow, invertTwist, invertClimber;
 
         [Header("Poses (Spectrum 'ex' values; reef poses are mirrored automatically when scoring off the back)")]
-        [SerializeField] private SpectrumPose stowPose = new SpectrumPose(0, 0, 180, 90);
+        // x = elevator motor rotations, y = shoulder, z = elbow, w = twist (degrees, robot code). Vector4, not a custom
+        // class: the built game can't load serialized fields whose type comes from the mod's own DLL, so those fell
+        // back to their code defaults there. Twist is ignored for L2-L4, which use the branch twist.
+        [SerializeField] private Vector4 stowPose = new Vector4(0, 0, 180, 90);
         [Tooltip("Stow while holding algae: wrist turned 90 from the normal stow")]
-        [SerializeField] private SpectrumPose algaeStowPose = new SpectrumPose(0, 0, 180, 179.9f);
-        [SerializeField] private SpectrumPose coralIntakePose = new SpectrumPose(0, -9.2f, -158.7f, 0);
-        [SerializeField] private SpectrumPose groundCoralIntakePose = new SpectrumPose(0, 4, 76, 179.9f);
-        [SerializeField] private SpectrumPose algaeIntakePose = new SpectrumPose(4.5f, 0, 64, 0);
-        [SerializeField] private SpectrumPose l1Pose = new SpectrumPose(0.3f, 16.9f, -130.6f, 0);
-        [SerializeField] private SpectrumPose l2Pose = new SpectrumPose(6.4f, -19.8f, -127.1f, 0);
-        [SerializeField] private SpectrumPose l2ScorePose = new SpectrumPose(4.1f, 25, -116, 0);
-        [SerializeField] private SpectrumPose l3Pose = new SpectrumPose(16.9f, -19.8f, -127.1f, 0);
-        [SerializeField] private SpectrumPose l3ScorePose = new SpectrumPose(14.6f, 30, -106.4f, 0);
-        [SerializeField] private SpectrumPose l4Pose = new SpectrumPose(21.1f * 0.999f, 193.5f, -131.6f, 0);
-        [SerializeField] private SpectrumPose l4ScorePose = new SpectrumPose(21.1f * 0.999f - 3, 145.8f, -104, 0);
-        [SerializeField] private SpectrumPose lowAlgaePose = new SpectrumPose(2.5f, 160, -86, 179.9f);
-        [SerializeField] private SpectrumPose highAlgaePose = new SpectrumPose(13.5f, 160, -86, 179.9f);
-        [SerializeField] private SpectrumPose processorPose = new SpectrumPose(0, -143.877f, 64.072f, 0);
-        [SerializeField] private SpectrumPose bargePose = new SpectrumPose(21.1f * 0.999f, 180, -180, 179.9f);
-        [SerializeField] private SpectrumPose climbPose = new SpectrumPose(0, 45, 180, 179.9f);
+        [SerializeField] private Vector4 algaeStowPose = new Vector4(0, 0, 180, 179.9f);
+        [SerializeField] private Vector4 coralIntakePose = new Vector4(0, -9.2f, -158.7f, 0);
+        [SerializeField] private Vector4 groundCoralIntakePose = new Vector4(0, 4, 76, 179.9f);
+        [SerializeField] private Vector4 algaeIntakePose = new Vector4(4.5f, 0, 64, 0);
+        [SerializeField] private Vector4 l1Pose = new Vector4(0.3f, 16.9f, -130.6f, 0);
+        [SerializeField] private Vector4 l2Pose = new Vector4(6.4f, -19.8f, -127.1f, 0);
+        [SerializeField] private Vector4 l2ScorePose = new Vector4(4.1f, 25, -116, 0);
+        [SerializeField] private Vector4 l3Pose = new Vector4(16.9f, -19.8f, -127.1f, 0);
+        [SerializeField] private Vector4 l3ScorePose = new Vector4(14.6f, 30, -106.4f, 0);
+        [SerializeField] private Vector4 l4Pose = new Vector4(21.1f * 0.999f, 193.5f, -131.6f, 0);
+        [SerializeField] private Vector4 l4ScorePose = new Vector4(21.1f * 0.999f - 3, 145.8f, -104, 0);
+        [SerializeField] private Vector4 lowAlgaePose = new Vector4(2.5f, 160, -86, 179.9f);
+        [SerializeField] private Vector4 highAlgaePose = new Vector4(13.5f, 160, -86, 179.9f);
+        [SerializeField] private Vector4 processorPose = new Vector4(0, -143.877f, 64.072f, 0);
+        [SerializeField] private Vector4 bargePose = new Vector4(21.1f * 0.999f, 180, -180, 179.9f);
+        [SerializeField] private Vector4 climbPose = new Vector4(0, 45, 180, 179.9f);
 
         [Tooltip("Barge and its score: the wrist turrets so the claw faces the barge (bargePose's twist faces the robot's front)")]
         [SerializeField] private bool bargeTwistTracksBarge = true;
@@ -117,6 +120,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private float climberStow = 90;
         [SerializeField] private float climberDeploy = -20;
         [SerializeField] private float climberClimbed = 100;
+        [Tooltip("Fastest the climber's target moves (degrees/s), so climberPid.Max sets its strength against the " +
+                 "robot's weight without also speeding up the free swing")]
+        [SerializeField] private float climberMaxSpeed = 270;
 
         [Header("Intakes")]
         [SerializeField] private ReefscapeGamePieceIntake coralIntake;
@@ -144,7 +150,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private GamePieceState algaeStowState;
 
         [Header("Debug")]
-        [Tooltip("Writes one CSV row per physics tick to <project>/Logs/GammaRayJoints.csv")]
+        [Tooltip("Writes one CSV row per physics tick to <project>/Logs/GammaRayJoints.csv: each joint's target, angle, " +
+                 "PID terms and load, and the robot's height and tilt")]
         [SerializeField] private bool logJoints;
 
         [Header("Release")]
@@ -173,6 +180,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private bool _reversed;      // scoring off the back: shoulder/elbow negated, twist turned 180 (as in Spectrum's code)
         private bool _branchTwist;   // twist comes from the chosen branch instead of the pose
         private float _climberTarget;
+        private float? _disabledElevatorHeight; // set while disabled, see ApplyPose
+        private float _climberCommand; // _climberTarget, rate limited to climberMaxSpeed
 
         // commanded targets in robot-code units (after reverse/branch), released joint by joint by the sequence
         private float _elevatorTarget, _shoulderTarget, _elbowTarget, _twistTarget;
@@ -194,7 +203,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private AlignNode[] _reefFaces;
         private CoralStation[] _stations;
         private BoxCollider[] _barges;
-        private GameObject _ownReef;
+        private GameObject[] _reefs;
         private bool _stationBehind;
         private bool _stationMode;   // coral intake: false = ground (default), true = human player station; RobotSpecial toggles, as on 2910
         private bool _robotSpecialPressed;
@@ -207,6 +216,26 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         /// Spectrum's rightScore: the right branch (as seen from the robot) was picked. _rightBranch has swapBranchSides baked in for the twist
         public bool RightBranch => _rightBranch != swapBranchSides;
 
+        protected override void Update()
+        {
+            base.Update();
+            // The base latches FacingReef on these presses against our own alliance's reef, which is backwards at the
+            // other reef (stealing algae); redo it against whichever reef is nearest
+            if (BaseGameManager.Instance.RobotState != RobotState.Disabled &&
+                (L2Action.triggered || L3Action.triggered || L4Action.triggered ||
+                 AutoAlignLeftAction.triggered || AutoAlignRightAction.triggered))
+                CheckFacingNearestReef();
+        }
+
+        private GameObject NearestReef(Vector3 from) =>
+            _reefs.OrderBy(r => (r.transform.position - from).sqrMagnitude).FirstOrDefault();
+
+        private void CheckFacingNearestReef()
+        {
+            var reef = NearestReef(transform.position);
+            if (reef) FacingReef = Vector3.Dot(transform.forward, reef.transform.position - transform.position) > 0;
+        }
+
         protected override void Start()
         {
             base.Start();
@@ -218,9 +247,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             _pidStartTime = Time.time;
 
             _pose = stowPose;
-            _climberTarget = climberStow;
+            _climberTarget = _climberCommand = climberStow;
             (_elevatorTarget, _shoulderTarget, _elbowTarget, _twistTarget) =
-                (stowPose.elevator, stowPose.shoulder, stowPose.elbow, stowPose.twist);
+                (stowPose.x, stowPose.y, stowPose.z, stowPose.w);
             _phaseSetpoint = CurrentSetpoint;
             _phaseStart = Time.time;
             _robotMask = LayerMask.GetMask("Robot");
@@ -230,7 +259,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 .Where(node => node != null)
                 .ToArray();
             _stations = FindObjectsByType<CoralStation>(FindObjectsSortMode.None);
-            _ownReef = GameObject.Find(Alliance == Alliance.Blue ? "BlueReef" : "RedReef");
+            _reefs = new[] { GameObject.Find("BlueReef"), GameObject.Find("RedReef") }.Where(r => r).ToArray();
             _barges = FindObjectsByType<BargeScorer>(FindObjectsSortMode.None)
                 .Select(b => b.GetComponent<BoxCollider>()).Where(c => c).ToArray();
             if (autoAlign) _baseAlignOffset = autoAlign.offset;
@@ -274,9 +303,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 _phaseSetpoint = CurrentSetpoint;
                 _phaseStart = Time.time;
                 _released = false;
-                // The base only updates FacingReef on L2-L4; same check as its (private) CheckFacingReef
-                if (CurrentSetpoint == ReefscapeSetpoints.L1 && _ownReef)
-                    FacingReef = Vector3.Dot(transform.forward, _ownReef.transform.position - transform.position) > 0;
+                // The base only updates FacingReef on L2-L4
+                if (CurrentSetpoint == ReefscapeSetpoints.L1) CheckFacingNearestReef();
             }
 
             bool hasCoral = _coralController.HasPiece();
@@ -406,12 +434,23 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 var path = Path.Combine(Application.dataPath, "..", "Logs", "GammaRayJoints.csv");
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
                 _log = new StreamWriter(path, false) { AutoFlush = true };
-                _log.WriteLine("time,setpoint,lastSetpoint," + string.Join(",", joints.Select(j =>
-                    $"{j.name}_target,{j.name}_angle,{j.name}_blocked,{j.name}_spinDegPerSec,{j.name}_pidOut")));
+                _log.WriteLine("time,robotState,setpoint,lastSetpoint,robotHeight,robotPitch,robotRoll,robotSpeed,pidDt," +
+                               string.Join(",", joints.Select(j =>
+                                   $"{j.name}_target,{j.name}_angle,{j.name}_blocked,{j.name}_spinDegPerSec,{j.name}_pidOut," +
+                                   $"{j.name}_error,{j.name}_pTerm,{j.name}_dTerm,{j.name}_iTerm,{j.name}_torque,{j.name}_force")));
             }
 
             var inv = CultureInfo.InvariantCulture;
-            var cols = new List<string> { Time.time.ToString("F3", inv), CurrentSetpoint.ToString(), LastSetpoint.ToString() };
+            var body = GetComponent<Rigidbody>();
+            var e = transform.eulerAngles;
+            _loops.TryGetValue(climber, out var anyLoop); // dt is shared by every joint
+            var cols = new List<string>
+            {
+                Time.time.ToString("F3", inv), BaseGameManager.Instance.RobotState.ToString(), CurrentSetpoint.ToString(),
+                LastSetpoint.ToString(), transform.position.y.ToString("F3", inv), Mathf.DeltaAngle(0, e.x).ToString("F2", inv),
+                Mathf.DeltaAngle(0, e.z).ToString("F2", inv), (body ? body.velocity.magnitude : 0).ToString("F3", inv),
+                (anyLoop?.dt ?? 0).ToString("F3", inv),
+            };
             foreach (var (_, joint, axis) in joints)
             {
                 var localAxis = AxisVector(axis);
@@ -422,13 +461,18 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 // spin about the joint's own axis relative to its parent, deg/s
                 var parentRb = cj.connectedBody;
                 var relSpin = rb.angularVelocity - (parentRb ? parentRb.angularVelocity : Vector3.zero);
-                float spin = Vector3.Dot(relSpin, joint.transform.TransformDirection(localAxis)) * Mathf.Rad2Deg;
+                var worldAxis = joint.transform.TransformDirection(localAxis);
+                float spin = Vector3.Dot(relSpin, worldAxis) * Mathf.Rad2Deg;
                 float cmdSpin = Vector3.Dot(cj.targetAngularVelocity, localAxis); // raw PID output, as GenericJoint writes it
                 cols.Add(Mathf.DeltaAngle(0, loop?.sentLocal ?? 0).ToString("F2", inv));
                 cols.Add(angle.ToString("F2", inv));
                 cols.Add((loop == null || float.IsNaN(loop.blocked) ? float.NaN : Mathf.DeltaAngle(0, loop.blocked)).ToString("F2", inv));
                 cols.Add(spin.ToString("F1", inv));
                 cols.Add(cmdSpin.ToString("F1", inv));
+                loop ??= new AngleLoop();
+                foreach (var v in new[] { loop.error, loop.pTerm, loop.dTerm, loop.iTerm,
+                             Vector3.Dot(cj.currentTorque, worldAxis), cj.currentForce.magnitude })
+                    cols.Add(v.ToString("F3", inv));
             }
             _log.WriteLine(string.Join(",", cols));
         }
@@ -500,7 +544,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 (_shoulderTarget, _elbowTarget, _twistTarget) = (s, e, t);
             }
 
-            elevator.SetTarget(Mathf.Clamp(_elevatorTarget * elevatorInchesPerRotation, 0, maxElevatorTravel));
+            // The elevator's GenericJoint ignores disabled mode (so it doesn't sag on the base game's weak brake), which
+            // also let it keep chasing targets while disabled; it holds the height it had when the robot was disabled
+            if (BaseGameManager.Instance.RobotState == RobotState.Disabled)
+                _disabledElevatorHeight ??= elevator.GetElevatorHeight();
+            else
+                _disabledElevatorHeight = null;
+            elevator.SetTarget(_disabledElevatorHeight ??
+                               Mathf.Clamp(_elevatorTarget * elevatorInchesPerRotation, 0, maxElevatorTravel));
             float shoulderAngle = ToUnity(_shoulderTarget, shoulderHome, invertShoulder);
             // An absolute elbow holds its angle against the robot, so it compensates for where the shoulder actually is
             float shoulderActual = JointAngle(shoulder, JointAxis.X);
@@ -520,7 +571,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                 ? ToUnity((_reversed ? wristFlipVia : wristFlipVia + 180), twistHome, invertTwist)
                 : (float?)null;
             Drive(wrist, JointAxis.Y, wristPid, ToUnity(_twistTarget, twistHome, invertTwist), blockedOverride: wristBlocked);
-            Drive(climber, JointAxis.Z, climberPid, ToUnity(_climberTarget, climberHome, invertClimber));
+            _climberCommand = Mathf.MoveTowards(_climberCommand, _climberTarget, climberMaxSpeed * Time.deltaTime);
+            Drive(climber, JointAxis.Z, climberPid, ToUnity(_climberCommand, climberHome, invertClimber));
         }
 
         /// Robot-code degrees to turn the twist from the robot's front to the nearest point on the barge,
@@ -557,6 +609,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             public float target = float.NaN, blocked = float.NaN, integral, lastAngle;
             public bool started;
             public float sentLocal, outputValue;
+            public float error, pTerm, dTerm, iTerm, dt; // last tick's PID terms, for the joint log
         }
 
         private readonly Dictionary<GenericJoint, AngleLoop> _loops = new();
@@ -604,6 +657,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             loop.lastAngle = current;
             loop.started = true;
             float pd = Mathf.Clamp(pid.kP * error - pid.kD * rate, -pid.Max, pid.Max);
+            (loop.error, loop.pTerm, loop.dTerm, loop.iTerm, loop.dt) = (error, pid.kP * error, -pid.kD * rate, pid.kI * loop.integral, dt);
             float output = Mathf.Clamp(pd + pid.kI * loop.integral, -pid.Max - pid.Isaturation, pid.Max + pid.Isaturation);
 
             var axisVector = AxisVector(axis);
@@ -640,7 +694,8 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
 
             // "Right" as seen looking at the reef face from the robot's side, like Spectrum's rightScore. Looks toward the
             // reef's center, not from the robot: auto-align parks the robot on faceCenter, which flipped the side once aligned
-            var lookAt = _ownReef ? _ownReef.transform.position - faceCenter : faceCenter - transform.position;
+            var reef = NearestReef(faceCenter);
+            var lookAt = reef ? reef.transform.position - faceCenter : faceCenter - transform.position;
             var lookRight = Vector3.Cross(Vector3.up, Vector3.ProjectOnPlane(lookAt, Vector3.up));
             _rightBranch = (Vector3.Dot(lookRight, branch.position - faceCenter) > 0) != swapBranchSides;
 
@@ -727,22 +782,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         }
     }
 
-    [Serializable]
+    /// One arm pose in robot-code units; the inspector stores it as a Vector4 (see the Poses header).
     public class SpectrumPose
     {
-        [Tooltip("Elevator motor rotations (robot code)")] public float elevator;
-        [Tooltip("Shoulder degrees (robot code)")] public float shoulder;
-        [Tooltip("Elbow degrees (robot code)")] public float elbow;
-        [Tooltip("Twist degrees (robot code); ignored for L2-L4, which use the branch twist")] public float twist;
+        public readonly float elevator, shoulder, elbow, twist;
 
-        public SpectrumPose() { }
+        public SpectrumPose(float elevator, float shoulder, float elbow, float twist) =>
+            (this.elevator, this.shoulder, this.elbow, this.twist) = (elevator, shoulder, elbow, twist);
 
-        public SpectrumPose(float elevator, float shoulder, float elbow, float twist)
-        {
-            this.elevator = elevator;
-            this.shoulder = shoulder;
-            this.elbow = elbow;
-            this.twist = twist;
-        }
+        public static implicit operator SpectrumPose(Vector4 v) => new SpectrumPose(v.x, v.y, v.z, v.w);
     }
 }
