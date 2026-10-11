@@ -29,6 +29,7 @@ Restart the game after installing. To install by hand, put the `SpectrumMod` fol
 - Scores L1–L4 off the front or back, whichever side faces the reef
 - Auto-align left/right picks the branch; the wrist turns toward it
 - Ground coral intake by default; **Robot Special** toggles human player station intake
+- **Intake Mode Toggle** (D-pad left) while intaking flips the ground coral/algae intake to the other side; scoring resets it to the front
 - Algae from the ground, stack and low/high reef; barge and processor scoring
 - Works at either alliance's reef: front/back and left/right branch follow the reef you're at, so you can steal algae from the other side
 - Robot Signal Light: solid orange while disabled, blinking while enabled

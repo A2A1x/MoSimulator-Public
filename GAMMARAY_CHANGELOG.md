@@ -1,5 +1,10 @@
 # GammaRay (3847) Changelog
 
+## v1.1.0 (unreleased)
+
+### Intake
+- Ground coral and algae intake can flip to the other side: press Intake Mode Toggle (D-pad left) while intaking. Scoring flips it back, so the next intake starts on the default side
+
 ## v1.0.0 (2026-10-08)
 
 ### Fixes
