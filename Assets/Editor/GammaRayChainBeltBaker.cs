@@ -80,13 +80,13 @@ namespace Editor
                 }
 
                 // The model has no belt between the forearm's 12T motor pulley and its 24T pulley: one is generated
-                // around their pitch circles, and turns the wrist (twist) like the motor would
+                // around their pitch circles. The 12T's motor drives the intake roller, so the belt follows the
+                // roller's spin; its speed assumes the 24T turns with the roller
                 var small = all.FirstOrDefault(x => x.name.StartsWith("12t Aluminum Pulley"));
                 var large = all.FirstOrDefault(x => x.name.StartsWith("24t Aluminum Pulley"));
                 var beltLook = all.FirstOrDefault(x => x.name == "45t 5mm Belt");
                 if (small && large && beltLook)
                 {
-                    var wrist = Field("wrist");
                     // Axis from the 24T only: it's flatter than round (9 mm wide), the 12T isn't (15 mm wide)
                     var (largeCenter, axis) = WheelAxis(large);
                     var smallCenter = small.TransformPoint(small.GetComponent<MeshFilter>().sharedMesh.bounds.center);
@@ -111,7 +111,10 @@ namespace Editor
                     go.GetComponent<MeshRenderer>().sharedMaterial = beltLook.GetComponent<MeshRenderer>().sharedMaterial;
                     var chainBelt = go.GetComponent<ChainBelt>();
                     if (!chainBelt) chainBelt = go.AddComponent<ChainBelt>();
-                    chainBelt.driver = wrist;
+                    chainBelt.driver = roller;
+                    // The roller sits on the wrist, which twists against the forearm the belt is on: follow the
+                    // roller's own spin about its hinge
+                    chainBelt.driverAxis = roller.GetComponent<HingeJoint>().axis;
                     chainBelt.pitch = Htd5Pitch;
                     chainBelt.isBelt = true;
 
@@ -127,14 +130,14 @@ namespace Editor
                             points.Add(rim + axis * 0.0045f);
                             points.Add(rim - axis * 0.0045f);
                         }
-                    float twistAngle = Vector3.Angle(axis, wrist.up);
                     // Should be ~90: the line between the pulleys lies in the belt's plane
                     float centersAngle = Vector3.Angle(axis, largeCenter - small.TransformPoint(
                         small.GetComponent<MeshFilter>().sharedMesh.bounds.center));
+                    string report = BakeLoop(chainBelt, points.ToArray(), axis, Pivot(roller), wheels, encoderGears, claimed);
+                    chainBelt.radius = r2;
                     Debug.Log($"GammaRay chains: generated {go.name} between {small.name} and {large.name}, " +
-                              $"{d * 1000:F1} mm apart (axis {centersAngle:F0} deg from the line between them), driven by {wrist.name} (its twist axis is " +
-                              $"{Mathf.Min(twistAngle, 180 - twistAngle):F0} deg from the belt's): " +
-                              BakeLoop(chainBelt, points.ToArray(), axis, Pivot(wrist), wheels, encoderGears, claimed));
+                              $"{d * 1000:F1} mm apart (axis {centersAngle:F0} deg from the line between them), driven by " +
+                              $"{roller.name}'s spin at {r2 * 1000:F1} mm (the 24T's pitch radius): {report}");
                 }
                 else Debug.LogWarning("GammaRay chains: 12T or 24T pulley not found, no generated belt");
 

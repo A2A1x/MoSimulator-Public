@@ -10,6 +10,7 @@
 - Elevator belts and the wrist twist belt, missing from the model, are back; the elevator belts follow the carriage as it moves
 - SRPP parts have a black woven finish, like carbon fiber
 - LEDs no longer turn solid green when the right branch is picked
+- LED patterns run along the strips instead of the whole strip showing one color: the auto countdown turns LEDs off one by one from top to bottom, and the disabled fade flows along the strip
 
 ## v1.0.0 (2026-10-08)
 

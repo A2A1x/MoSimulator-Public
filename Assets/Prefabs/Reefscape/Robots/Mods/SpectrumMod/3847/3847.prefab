@@ -1328,8 +1328,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae1f815c256041ac977eb3411e5a00ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  driver: {fileID: 1317509690213141977}
-  radius: 0.02
+  driver: {fileID: 6606262664415299311}
+  driverAxis: {x: 1, y: 0, z: 0}
+  radius: 0.019098593
   isBelt: 1
   pitch: 0.005
   outer:
@@ -35018,6 +35019,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   driver: {fileID: 4803340776882711915}
+  driverAxis: {x: 0, y: 0, z: 0}
   radius: 0.07143987
   isBelt: 0
   pitch: 0.00635
@@ -82277,6 +82279,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   driver: {fileID: 1208365260196159654}
+  driverAxis: {x: 0, y: 0, z: 0}
   radius: 0.043256227
   isBelt: 0
   pitch: 0.00889
@@ -84121,12 +84124,10 @@ MonoBehaviour:
   strips:
   - {fileID: 1308752321581899817}
   - {fileID: 6377158398118828251}
-  ledShader: {fileID: -6465566751694194690, guid: 88d82d76b25302e4f81533f3cee81aab,
-    type: 3}
+  ledShader: {fileID: 4800000, guid: 6d7f83df6f3b1da4da5c527969c0dff2, type: 3}
   ledsPerStrip: 30
   intensity: 2
-  alongV: 0
-  reverse: 0
+  reverse: 1
   netZoneDistance: 0.844
   netZoneTolerance: 0.3
   rsl: {fileID: 4512959409361427116}
@@ -101098,6 +101099,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   driver: {fileID: 4579522014221325901}
+  driverAxis: {x: 0, y: 0, z: 0}
   radius: 0.06933398
   isBelt: 0
   pitch: 0.00635
@@ -118118,6 +118120,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   driver: {fileID: 6606262664415299311}
+  driverAxis: {x: 0, y: 0, z: 0}
   radius: 0.02
   isBelt: 1
   pitch: 0.005
@@ -126550,6 +126553,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   driver: {fileID: 1208365260196159654}
+  driverAxis: {x: 0, y: 0, z: 0}
   radius: 0.043256227
   isBelt: 0
   pitch: 0.00889
@@ -128461,6 +128465,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   driver: {fileID: 4803340776882711915}
+  driverAxis: {x: 0, y: 0, z: 0}
   radius: 0.047220953
   isBelt: 0
   pitch: 0.00635
@@ -174443,7 +174448,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   driver: {fileID: 6606262664415299311}
-  radius: 0.01055268
+  driverAxis: {x: 0, y: 0, z: 0}
+  radius: 0.0107319355
   isBelt: 1
   pitch: 0.005
   outer:

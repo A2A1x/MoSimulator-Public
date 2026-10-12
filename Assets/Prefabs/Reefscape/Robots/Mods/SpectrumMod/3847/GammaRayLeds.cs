@@ -18,8 +18,6 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         [SerializeField] private int ledsPerStrip = 30;
         [Tooltip("Emission multiplier. Too high and every colour clips to white in the tonemapper. Live in Play mode")]
         [SerializeField] private float intensity = 2;
-        [Tooltip("Tick if the pattern runs across the strip instead of along it (the strip mesh's UVs run along V)")]
-        [SerializeField] private bool alongV;
         [Tooltip("Tick if bounce/ombre/countdown run the wrong way along the strip")]
         [SerializeField] private bool reverse;
         [Tooltip("Zones.netAlgaeZone: robot center this far (m) from the barge's center line, +-0.3. 9.618 - field center 8.774")]
@@ -44,7 +42,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private static readonly Color HotPink = new Color32(255, 105, 180, 255);
 
         private GammaRay _robot;
-        private Material _mat;
+        private readonly System.Collections.Generic.List<Material> _mats = new();
         private Texture2D _tex;
         private Color[] _px;
         private Collider[] _barges;
@@ -56,15 +54,26 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         {
             _robot = GetComponent<GammaRay>();
             _px = new Color[ledsPerStrip];
-            _tex = alongV ? new Texture2D(1, ledsPerStrip) : new Texture2D(ledsPerStrip, 1);
+            _tex = new Texture2D(ledsPerStrip, 1);
             _tex.filterMode = FilterMode.Point;
             _tex.wrapMode = TextureWrapMode.Clamp;
 
-            _mat = new Material(ledShader);
-            _mat.SetTexture("_Texture2D", _tex);
-            _mat.SetFloat("_X", 0);
-            _mat.SetFloat("_Y", 0);
-            foreach (var strip in strips) strip.sharedMaterial = _mat;
+            // The strip mesh has no UVs along its length, so ledShader (GammaRay/LedStrip) places the pixels by
+            // position along the strip's longest side; each strip gets its own material for its own extent.
+            foreach (var strip in strips)
+            {
+                var b = strip.GetComponent<MeshFilter>().sharedMesh.bounds;
+                int axis = b.size.x >= b.size.y && b.size.x >= b.size.z ? 0 : b.size.y >= b.size.z ? 1 : 2;
+                var dir = Vector3.zero;
+                dir[axis] = 1;
+                var mat = new Material(ledShader);
+                mat.SetTexture("_Texture2D", _tex);
+                mat.SetVector("_Axis", dir);
+                mat.SetFloat("_Min", b.min[axis]);
+                mat.SetFloat("_Max", b.max[axis]);
+                strip.sharedMaterial = mat;
+                _mats.Add(mat);
+            }
 
             if (rsl && rslSlot < rsl.sharedMaterials.Length)
             {
@@ -95,7 +104,7 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             if (reverse) System.Array.Reverse(_px);
             _tex.SetPixels(_px);
             _tex.Apply(false);
-            _mat.SetFloat("_intensity", intensity);
+            foreach (var mat in _mats) mat.SetFloat("_intensity", intensity);
 
             if (_rslMat)
             {

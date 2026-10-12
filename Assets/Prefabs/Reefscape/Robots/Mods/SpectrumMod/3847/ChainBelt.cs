@@ -14,6 +14,9 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
     {
         [Tooltip("Turns the loop: travel = the driver's rotation (relative to this object) about the baked axis, times radius")]
         public Transform driver;
+        [Tooltip("Zero: the driver turns the loop about the loop's axis. Otherwise the axis the driver spins about, in its " +
+                 "own space; the loop follows that spin relative to the driver's parent, times radius")]
+        public Vector3 driverAxis;
         [Tooltip("Pitch radius (m) of the sprocket/pulley on the driver. Negative runs the loop the other way. Live in Play mode")]
         public float radius = 0.02f;
         [Tooltip("Off = roller chain (links), on = timing belt (band)")]
@@ -75,14 +78,19 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             }
         }
 
-        private Quaternion Relative() => Quaternion.Inverse(transform.rotation) * driver.rotation;
+        /// Without a driver axis, the driver's rotation relative to this object (measured about the loop's axis);
+        /// with one, its own spin relative to its parent (e.g. a roller on a wrist that twists)
+        private Quaternion Relative() =>
+            driverAxis == Vector3.zero ? Quaternion.Inverse(transform.rotation) * driver.rotation : driver.localRotation;
 
         private void LateUpdate()
         {
             var relative = Relative();
             var delta = relative * Quaternion.Inverse(_lastRelative);
             _lastRelative = relative;
-            float angle = 2 * Mathf.Atan2(Vector3.Dot(new Vector3(delta.x, delta.y, delta.z), axis), delta.w);
+            // A driver turning about its own axis leaves that axis where it was (in its parent's frame)
+            var about = driverAxis == Vector3.zero ? axis : relative * driverAxis;
+            float angle = 2 * Mathf.Atan2(Vector3.Dot(new Vector3(delta.x, delta.y, delta.z), about), delta.w);
             if (angle > Mathf.PI) angle -= 2 * Mathf.PI;
             else if (angle < -Mathf.PI) angle += 2 * Mathf.PI;
             float step = angle * radius;
