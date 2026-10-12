@@ -29,18 +29,23 @@ Restart the game after installing. To install by hand, put the `SpectrumMod` fol
 - Scores L1–L4 off the front or back, whichever side faces the reef
 - Auto-align left/right picks the branch; the wrist turns toward it
 - Ground coral intake by default; **Robot Special** toggles human player station intake
+- **Intake Mode Toggle** (D-pad left) while intaking flips the ground coral/algae intake to the other side; scoring resets it to the front
 - Algae from the ground, stack and low/high reef; barge and processor scoring
 - Works at either alliance's reef: front/back and left/right branch follow the reef you're at, so you can steal algae from the other side
 - Robot Signal Light: solid orange while disabled, blinking while enabled
+- Chains and belts run with the mechanisms they drive, turning their sprockets and pulleys; the elevator belts follow the carriage
 
 Tested on MoSimulator v25.3.1 (Windows).
 
 ### Building
 The mod lives in `Assets/Prefabs/Reefscape/Robots/Mods/SpectrumMod` (robot code: `3847/GammaRay.cs`). In Unity, **Tools > Build Mod (all platforms)** builds the Addressables for Windows, macOS and Linux, zips each as `SpectrumMod-v<version>-<OS>.zip` in the project root, and installs the Windows build into your local game. The version comes from `modpackVersion` in `ReefscapeModpack.asset`. To build one platform by hand, see [install-mod.ps1](install-mod.ps1) (a build tool; the install scripts above are for players).
 
+The animated chains and belts are baked from the CAD meshes by **Tools > GammaRay > Bake Chains and Belts** ([GammaRayChainBeltBaker.cs](Assets/Editor/GammaRayChainBeltBaker.cs)); rerun it after changing the model.
+
 ### Branches
 - `SpectrumMod`: the latest released version
 - `GammaRay-beta-v*`: work on the next beta
+- `GammaRay-v*`: work on the next release
 
 <br>
 Note: MoSimulator's source code is protected by a custom proprietary license. By downloading or interacting with this repository, you agree to the terms outlined in the LICENSE file.

@@ -207,14 +207,14 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
         private bool _stationBehind;
         private bool _stationMode;   // coral intake: false = ground (default), true = human player station; RobotSpecial toggles, as on 2910
         private bool _robotSpecialPressed;
+        private bool _groundIntakeFlipped; // ground coral/algae intake off the back; IntakeModeToggle flips it while intaking, scoring resets it
+        private bool _intakeFlipPressed;
         [Tooltip("Coral intake only switches sides once the station is this far (dot of forward and direction) past side-on, so it doesn't flicker")]
         [SerializeField] private float stationSideDeadband = 0.2f;
         private Vector3 _baseAlignOffset;
         private Quaternion _pincherHomeRot;
         private float _pincherAngle;
-        private bool _rightBranch = true;
-        /// Spectrum's rightScore: the right branch (as seen from the robot) was picked. _rightBranch has swapBranchSides baked in for the twist
-        public bool RightBranch => _rightBranch != swapBranchSides;
+        private bool _rightBranch = true; // the branch the twist turns to; has swapBranchSides baked in
 
         protected override void Update()
         {
@@ -298,6 +298,10 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             CheckStationMode();
             if (_clearingCoral.Length > 0 && Time.time >= _clearUntil) SetCoralIgnoresRobot(Array.Empty<Collider>());
 
+            bool flipPressed = IntakeModeToggleAction.IsPressed() && !_intakeFlipPressed &&
+                               BaseGameManager.Instance.RobotState == RobotState.Enabled;
+            _intakeFlipPressed = IntakeModeToggleAction.IsPressed();
+
             if (CurrentSetpoint != _phaseSetpoint)
             {
                 _phaseSetpoint = CurrentSetpoint;
@@ -329,11 +333,13 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
                         float side = Vector3.Dot(transform.forward, (station.transform.position - transform.position).normalized);
                         if (Mathf.Abs(side) > stationSideDeadband) _stationBehind = side < 0;
                     }
-                    _reversed = coralMode && _stationMode && allowReverse && _stationBehind;
+                    if (flipPressed && !(coralMode && _stationMode)) _groundIntakeFlipped = !_groundIntakeFlipped;
+                    _reversed = coralMode && _stationMode ? allowReverse && _stationBehind : _groundIntakeFlipped;
                     wantCoral = empty && coralMode && Time.time >= _coralIntakeBlockedUntil;
                     wantAlgae = empty && !coralMode;
                     break;
                 case ReefscapeSetpoints.Place:
+                    _groundIntakeFlipped = false;
                     // L2-L4 move to their score pose (same side and branch); everything else releases where it is
                     if (LastSetpoint == ReefscapeSetpoints.L2) SetPose(l2ScorePose, reef: true, branch: true);
                     else if (LastSetpoint == ReefscapeSetpoints.L3) SetPose(l3ScorePose, reef: true, branch: true);

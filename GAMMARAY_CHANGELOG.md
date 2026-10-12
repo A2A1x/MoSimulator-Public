@@ -1,5 +1,16 @@
 # GammaRay (3847) Changelog
 
+## v1.1.0 (2026-10-11)
+
+### Intake
+- Ground coral and algae intake can flip to the other side: press Intake Mode Toggle (D-pad left) while intaking. Scoring flips it back, so the next intake starts on the default side
+
+### Look
+- Chains and belts move: chains are real links that run around their sprockets, belts carry printed text that runs with them, and the sprockets, pulleys and encoder gears turn
+- Elevator belts and the wrist twist belt, missing from the model, are back; the elevator belts follow the carriage as it moves
+- SRPP parts have a black woven finish, like carbon fiber
+- LEDs no longer turn solid green when the right branch is picked
+
 ## v1.0.0 (2026-10-08)
 
 ### Fixes
