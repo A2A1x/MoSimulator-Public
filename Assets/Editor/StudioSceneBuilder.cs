@@ -7,12 +7,17 @@ using UnityEngine.Rendering;
 /// <summary>
 /// Tools > Build Studio Scene: copies Reefscape into Studio.unity, hides the whole field (its colliders stay,
 /// so the robot still spawns and drives normally), and puts the robot in a dark room under studio lights with a
-/// slow-orbit TeaserRig camera on every subsystem. [ and ] step through the shots, F12 turns them off.
+/// slow-orbit TeaserRig camera on every subsystem. [ and ] step through the shots, F12 turns them off, \ saves a photo.
+/// Tools > Build Green Screen Scene: same robot and shots against flat chroma green, under even neutral light with no
+/// floor or grade, for photos the editor keys out.
 /// </summary>
 public static class StudioSceneBuilder
 {
     private const string SourceScene = "Assets/Scenes/Reefscape.unity";
     private const string StudioScene = "Assets/Scenes/Studio.unity";
+    private const string GreenScreenScene = "Assets/Scenes/GreenScreen.unity";
+    private const string CleanLook = "Assets/Teaser/GreenScreenLook.asset";
+    private static readonly Color ChromaGreen = new Color32(0, 177, 64, 255); // #00B140, the usual keying green
     private const string FloorMaterial = "Assets/Teaser/StudioFloor.mat";
 
     // name, robot part ("" = robot root), offset from the part in robot space (x right, y up, z forward), fov, orbit deg/s
@@ -36,16 +41,21 @@ public static class StudioSceneBuilder
     };
 
     [MenuItem("Tools/Build Studio Scene")]
-    private static void Build()
+    private static void BuildStudio() => Build(StudioScene, false);
+
+    [MenuItem("Tools/Build Green Screen Scene")]
+    private static void BuildGreenScreen() => Build(GreenScreenScene, true);
+
+    private static void Build(string path, bool green)
     {
-        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(StudioScene) &&
-            !EditorUtility.DisplayDialog("Studio", $"{StudioScene} exists. Overwrite?", "Overwrite", "Cancel"))
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(path) &&
+            !EditorUtility.DisplayDialog("Studio", $"{path} exists. Overwrite?", "Overwrite", "Cancel"))
             return;
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
-        AssetDatabase.DeleteAsset(StudioScene);
-        AssetDatabase.CopyAsset(SourceScene, StudioScene);
-        var scene = EditorSceneManager.OpenScene(StudioScene);
+        AssetDatabase.DeleteAsset(path);
+        AssetDatabase.CopyAsset(SourceScene, path);
+        var scene = EditorSceneManager.OpenScene(path);
 
         var spawner = Object.FindAnyObjectByType<GameSystems.Management.RobotSpawnController>();
         var spawn = (Transform)new SerializedObject(spawner).FindProperty("blueSpawnPoints")
@@ -61,15 +71,63 @@ public static class StudioSceneBuilder
         foreach (var c in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             c.clearFlags = CameraClearFlags.SolidColor;
-            c.backgroundColor = Color.black;
+            c.backgroundColor = green ? ChromaGreen : Color.black;
         }
         RenderSettings.skybox = null;
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = new Color(0.015f, 0.015f, 0.02f);
-        RenderSettings.reflectionIntensity = 0.15f;
+        // Green screen: neutral ambient so shadowed parts aren't crushed to black (or tinted green).
+        RenderSettings.ambientLight = green ? new Color(0.12f, 0.12f, 0.12f) : new Color(0.015f, 0.015f, 0.02f);
+        RenderSettings.reflectionIntensity = green ? 0.3f : 0.15f;
         RenderSettings.fog = false;
 
-        var root = new GameObject("Studio");
+        var root = new GameObject(green ? "GreenScreen" : "Studio");
+        var aim = spawn.position + Vector3.up * 0.6f;
+        Vector3 At(float right, float up, float fwd) => spawn.position + spawn.rotation * new Vector3(right, up, fwd);
+        void Spot(string name, Vector3 pos, Color color, float intensity, float angle, bool shadows)
+        {
+            var l = new GameObject(name).AddComponent<Light>();
+            l.transform.SetParent(root.transform);
+            l.transform.position = pos;
+            l.transform.LookAt(aim);
+            l.type = LightType.Spot;
+            l.color = color;
+            l.intensity = intensity;
+            l.range = 15;
+            l.spotAngle = angle;
+            l.innerSpotAngle = angle * 0.6f;
+            l.shadows = shadows ? LightShadows.Soft : LightShadows.None;
+        }
+
+        if (green)
+        {
+            // No floor (it would spill green onto the robot) and no grade: vignette, bloom and tonemapping
+            // would shade or shift the background green and make it harder to key.
+            Spot("Key (front left)", At(-2.2f, 2.4f, 2.4f), Color.white, 14, 60, true);
+            Spot("Fill (front right)", At(2.6f, 1.5f, 2f), Color.white, 8, 60, false);
+            Spot("Back left", At(-2.4f, 2f, -2.4f), Color.white, 8, 60, false);
+            Spot("Back right", At(2.4f, 2f, -2.4f), Color.white, 8, 60, false);
+
+            var clean = AssetDatabase.LoadAssetAtPath<VolumeProfile>(CleanLook);
+            if (!clean)
+            {
+                clean = ScriptableObject.CreateInstance<VolumeProfile>();
+                AssetDatabase.CreateAsset(clean, CleanLook);
+                clean.Add<UnityEngine.Rendering.Universal.Vignette>(true).intensity.value = 0;
+                clean.Add<UnityEngine.Rendering.Universal.Bloom>(true).intensity.value = 0;
+                clean.Add<UnityEngine.Rendering.Universal.Tonemapping>(true).mode.value =
+                    UnityEngine.Rendering.Universal.TonemappingMode.None;
+                foreach (var c in clean.components) AssetDatabase.AddObjectToAsset(c, clean);
+            }
+            var volume = new GameObject("GreenScreenLook").AddComponent<Volume>();
+            volume.transform.SetParent(root.transform);
+            volume.isGlobal = true;
+            volume.priority = 10;
+            volume.sharedProfile = clean;
+            AddRig(root, false);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+            return;
+        }
 
         // Dark, slightly glossy floor so the robot picks up a soft reflection and the top light pools on it.
         var mat = AssetDatabase.LoadAssetAtPath<Material>(FloorMaterial);
@@ -89,22 +147,6 @@ public static class StudioSceneBuilder
         floor.GetComponent<Renderer>().sharedMaterial = mat;
 
         // Studio lights around the spawn point. Intensity/colour are the knobs to tune by eye.
-        var aim = spawn.position + Vector3.up * 0.6f;
-        Vector3 At(float right, float up, float fwd) => spawn.position + spawn.rotation * new Vector3(right, up, fwd);
-        void Spot(string name, Vector3 pos, Color color, float intensity, float angle, bool shadows)
-        {
-            var l = new GameObject(name).AddComponent<Light>();
-            l.transform.SetParent(root.transform);
-            l.transform.position = pos;
-            l.transform.LookAt(aim);
-            l.type = LightType.Spot;
-            l.color = color;
-            l.intensity = intensity;
-            l.range = 15;
-            l.spotAngle = angle;
-            l.innerSpotAngle = angle * 0.6f;
-            l.shadows = shadows ? LightShadows.Soft : LightShadows.None;
-        }
         Spot("Key (front left, warm)", At(-2.2f, 2.6f, 2.4f), new Color(1f, 0.93f, 0.85f), 17, 45, true);
         Spot("Fill (front right, cool)", At(2.6f, 1.3f, 1.8f), new Color(0.8f, 0.87f, 1f), 4, 55, false);
         Spot("Rim (back, cool white)", At(0.6f, 3f, -2.8f), new Color(0.85f, 0.9f, 1f), 21, 40, false);
@@ -122,6 +164,13 @@ public static class StudioSceneBuilder
             volume.sharedProfile = look;
         }
 
+        AddRig(root, true);
+        EditorSceneManager.SaveScene(scene);
+        Selection.activeGameObject = root;
+    }
+
+    private static void AddRig(GameObject root, bool rainbow)
+    {
         var rig = new GameObject("StudioRig").AddComponent<TeaserRig>();
         rig.transform.SetParent(root.transform);
         var so = new SerializedObject(rig);
@@ -136,10 +185,7 @@ public static class StudioSceneBuilder
             e.FindPropertyRelative("fov").floatValue = Shots[i].fov;
             e.FindPropertyRelative("orbit").floatValue = Shots[i].orbit;
         }
-        so.FindProperty("rainbowLeds").boolValue = true;
+        so.FindProperty("rainbowLeds").boolValue = rainbow;
         so.ApplyModifiedPropertiesWithoutUndo();
-
-        EditorSceneManager.SaveScene(scene);
-        Selection.activeGameObject = root;
     }
 }

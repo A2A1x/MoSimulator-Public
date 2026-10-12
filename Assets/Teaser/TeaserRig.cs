@@ -15,7 +15,7 @@ using UnityEngine.Timeline;
 /// Teaser-only: snaps the camera targets to the spawned robot, binds the timeline to
 /// whichever brain the spawner activated, then plays it.
 /// F1-F11 pick a shot (scene detail shots first, then robot part shots; stops the timeline), [ and ] step through
-/// every shot, F12 turns it off. Also drives Studio.unity, which has no timeline or detail shots. Shots render to their own
+/// every shot, F12 turns it off, \ saves a PNG photo of the live shot to Recordings/Photos. Also drives Studio.unity, which has no timeline or detail shots. Shots render to their own
 /// RecordCam on Display 2 (tagged RecordingCamera), so you drive from the normal gameplay view on Display 1 while
 /// the Recorder (input: Targeted Camera > Tagged Camera > RecordingCamera) captures the cinematic one.
 /// </summary>
@@ -55,6 +55,9 @@ public class TeaserRig : MonoBehaviour
     [SerializeField] private bool rainbowLeds;
     [SerializeField] private float rainbowSpeed = 0.15f; // strip lengths per second
     private float _rainbowPhase;
+
+    [Tooltip("Height in pixels of photos saved with backslash (16:9). 2160 = 4K")]
+    [SerializeField] private int photoHeight = 2160;
 
     private Texture2D _ledTex;
     private readonly List<CinemachineCamera> _shots = new();
@@ -120,6 +123,7 @@ public class TeaserRig : MonoBehaviour
         for (var i = 0; i < _shots.Count && i < 11; i++)
             if (Input.GetKeyDown(KeyCode.F1 + i)) Solo(i);
         if (Input.GetKeyDown(KeyCode.F12)) Solo(-1);
+        if (_recordCam && Input.GetKeyDown(KeyCode.Backslash)) StartCoroutine(TakePhoto());
         if (_shots.Count > 0 && Input.GetKeyDown(KeyCode.RightBracket)) Solo((_solo + 1) % _shots.Count);
         if (_shots.Count > 0 && Input.GetKeyDown(KeyCode.LeftBracket)) Solo((_solo - 1 + _shots.Count) % _shots.Count);
 
@@ -178,10 +182,39 @@ public class TeaserRig : MonoBehaviour
         typeof(BaseTimerManager).GetProperty(nameof(BaseTimerManager.CurrentGameState)).SetValue(_timer, GameState.Teleop);
     }
 
+    // Renders RecordCam once more at photoHeight (8x MSAA) after Cinemachine has placed it this frame.
+    private IEnumerator TakePhoto()
+    {
+        yield return new WaitForEndOfFrame();
+        var h = photoHeight;
+        var w = Mathf.RoundToInt(h * 16f / 9);
+        var rt = RenderTexture.GetTemporary(w, h, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB, 8);
+        var display = _recordCam.targetTexture;
+        _recordCam.targetTexture = rt;
+        _recordCam.Render();
+        _recordCam.targetTexture = display;
+
+        var active = RenderTexture.active;
+        RenderTexture.active = rt;
+        var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+        RenderTexture.active = active;
+        RenderTexture.ReleaseTemporary(rt);
+
+        var shot = _solo >= 0 ? _shots[_solo].name : "Free";
+        var dir = System.IO.Path.Combine(Application.dataPath, "..", "Recordings", "Photos");
+        System.IO.Directory.CreateDirectory(dir);
+        var file = System.IO.Path.GetFullPath(System.IO.Path.Combine(dir,
+            $"{gameObject.scene.name}_{shot.Replace('/', '-')}_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png"));
+        System.IO.File.WriteAllBytes(file, tex.EncodeToPNG());
+        Destroy(tex);
+        Debug.Log($"TeaserRig: saved photo {file}");
+    }
+
     // Shows the live shot in the gameplay view only; the Recorder captures RecordCam.
     private void OnGUI()
     {
-        if (_solo >= 0) GUI.Label(new Rect(10, 10, 500, 25), $"REC shot {_solo + 1}/{_shots.Count}: {_shots[_solo].name}   ([ ] step, F12 off)");
+        if (_solo >= 0) GUI.Label(new Rect(10, 10, 500, 25), $"REC shot {_solo + 1}/{_shots.Count}: {_shots[_solo].name}   ([ ] step, \\ photo, F12 off)");
     }
 
     private CinemachineCamera CreatePartShot(PartShot s, Transform[] parts)
