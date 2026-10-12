@@ -9,6 +9,7 @@
 - Chains and belts move: chains are real links that run around their sprockets, belts carry printed text that runs with them, and the sprockets, pulleys and encoder gears turn
 - Elevator belts and the wrist twist belt, missing from the model, are back; the elevator belts follow the carriage as it moves
 - SRPP parts have a black woven finish, like carbon fiber
+- LEDs no longer turn solid green when the right branch is picked
 
 ## v1.0.0 (2026-10-08)
 

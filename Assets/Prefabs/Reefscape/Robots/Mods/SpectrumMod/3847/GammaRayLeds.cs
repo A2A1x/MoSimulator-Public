@@ -89,7 +89,6 @@ namespace Prefabs.Reefscape.Robots.Mods.SpectrumMod._3847
             else if (gm.GameState == GameState.Auto) Countdown(Time.time - _autoStart, 15);
             // Teleop, highest priority first
             else if (_robot.CurrentSetpoint == ReefscapeSetpoints.Barge && InNetZone()) Edges(HotPink, 5, Green);  // 8
-            else if (_robot.RightBranch) Solid(Green);                                                               // 8
             else if (_robot.CurrentRobotMode == ReefscapeRobotMode.Algae) Solid(SeaGreen);                           // 6
             else Solid(Coral);                                                                                       // 6
 
