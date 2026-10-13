@@ -38,7 +38,7 @@ Restart the game after installing. To install by hand, put the `SpectrumMod` fol
 Tested on MoSimulator v25.3.1 (Windows).
 
 ### Building
-The mod lives in `Assets/Prefabs/Reefscape/Robots/Mods/SpectrumMod` (robot code: `3847/GammaRay.cs`). In Unity, **Tools > Build Mod (all platforms)** builds the Addressables for Windows, macOS and Linux, zips each as `SpectrumMod-v<version>-<OS>.zip` in the project root, and installs the Windows build into your local game. The version comes from `modpackVersion` in `ReefscapeModpack.asset`. To build one platform by hand, see [install-mod.ps1](install-mod.ps1) (a build tool; the install scripts above are for players).
+The mod lives in `Assets/Prefabs/Reefscape/Robots/Mods/SpectrumMod` (robot code: `3847/GammaRay.cs`). In Unity, **Tools > Build Mod (all platforms)** builds the Addressables for Windows, macOS and Linux, zips each as `Releases/SpectrumMod-v<version>-<OS>.zip`, and installs the Windows build into your local game. The version comes from `modpackVersion` in `ReefscapeModpack.asset`. To build one platform by hand, see [install-mod.ps1](install-mod.ps1) (a build tool; the install scripts above are for players).
 
 The animated chains and belts are baked from the CAD meshes by **Tools > GammaRay > Bake Chains and Belts** ([GammaRayChainBeltBaker.cs](Assets/Editor/GammaRayChainBeltBaker.cs)); rerun it after changing the model.
 
